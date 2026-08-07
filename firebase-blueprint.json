@@ -1,0 +1,134 @@
+{
+  "entities": {
+    "CarListing": {
+      "title": "Car Listing",
+      "description": "Vehicle advertisement listing",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 100 },
+        "priceUSD": { "type": "number" },
+        "priceSYP": { "type": "number" },
+        "city": { "type": "string", "maxLength": 50 },
+        "image": { "type": "string" },
+        "year": { "type": "number" },
+        "mileage": { "type": "string" },
+        "phone": { "type": "string", "maxLength": 30 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["title", "city", "phone"]
+    },
+    "RealEstateListing": {
+      "title": "Real Estate Listing",
+      "description": "Property advertisement listing",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 100 },
+        "priceUSD": { "type": "number" },
+        "priceSYP": { "type": "number" },
+        "city": { "type": "string", "maxLength": 50 },
+        "phone": { "type": "string", "maxLength": 30 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["title", "city", "phone"]
+    },
+    "JobListing": {
+      "title": "Job Listing",
+      "description": "Job recruitment advertisement listing",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 100 },
+        "company": { "type": "string", "maxLength": 100 },
+        "city": { "type": "string", "maxLength": 50 },
+        "phone": { "type": "string", "maxLength": 30 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["title", "company", "phone"]
+    },
+    "OwnerAd": {
+      "title": "Owner Exclusive Spotlight Ad",
+      "description": "Ad published directly by platform owner with media",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "priceSYP": { "type": "string" },
+        "priceUSD": { "type": "string" },
+        "phone": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "galleryImages": { "type": "array" },
+        "videoUrl": { "type": "string" },
+        "videoUrls": { "type": "array" },
+        "isPublished": { "type": "boolean" }
+      }
+    },
+    "Report": {
+      "title": "Report Entry",
+      "description": "User flags and reports on listings",
+      "type": "object",
+      "properties": {
+        "targetTitle": { "type": "string", "maxLength": 100 },
+        "reason": { "type": "string", "maxLength": 300 },
+        "reporterPhone": { "type": "string", "maxLength": 30 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["targetTitle", "reason"]
+    },
+    "ActivityLog": {
+      "title": "User Activity Log",
+      "description": "Log of user actions like posting ads, bookmarking, and reporting",
+      "type": "object",
+      "properties": {
+        "action": { "type": "string", "maxLength": 100 },
+        "details": { "type": "string", "maxLength": 500 },
+        "userEmail": { "type": "string", "maxLength": 100 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["action", "userEmail"]
+    },
+    "Bookmark": {
+      "title": "User Bookmark",
+      "description": "User saved and confirmed listings",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 200 },
+        "subtitle": { "type": "string", "maxLength": 300 },
+        "category": { "type": "string", "maxLength": 50 },
+        "price": { "type": "string", "maxLength": 50 },
+        "confirmed": { "type": "boolean" },
+        "userEmail": { "type": "string", "maxLength": 100 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["title", "category"]
+    }
+  },
+  "firestore": {
+    "/cars/{carId}": {
+      "schema": { "$ref": "#/entities/CarListing" },
+      "description": "Collection of car listings"
+    },
+    "/real_estate/{propertyId}": {
+      "schema": { "$ref": "#/entities/RealEstateListing" },
+      "description": "Collection of real estate listings"
+    },
+    "/jobs/{jobId}": {
+      "schema": { "$ref": "#/entities/JobListing" },
+      "description": "Collection of job vacancy listings"
+    },
+    "/owner_spotlight/{adId}": {
+      "schema": { "$ref": "#/entities/OwnerAd" },
+      "description": "Collection for owner spotlight exclusive ad"
+    },
+    "/reports/{reportId}": {
+      "schema": { "$ref": "#/entities/Report" },
+      "description": "Collection of user abuse reports"
+    },
+    "/activity_logs/{logId}": {
+      "schema": { "$ref": "#/entities/ActivityLog" },
+      "description": "Collection of user activity logs"
+    },
+    "/bookmarks/{bookmarkId}": {
+      "schema": { "$ref": "#/entities/Bookmark" },
+      "description": "Collection of saved bookmarks"
+    }
+  }
+}

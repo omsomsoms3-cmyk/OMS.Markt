@@ -1,0 +1,12 @@
+{
+  "name": "Remix الأسواق السورية OMS",
+  "description": "تطبيق  يساعد  في الحصول على مزيد من معلومات السوق السوري الجديد",
+  "requestFramePermissions": [
+    "microphone",
+    "camera",
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
