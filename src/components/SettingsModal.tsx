@@ -3,16 +3,17 @@ import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import { usePermissions } from '../context/PermissionContext';
 import { useAppMode } from '../context/AppModeContext';
-import { Settings, Globe, X, Check, ShieldCheck, Moon, Sun, Laptop, Trash2, Sparkles, Lock, Mic, Image, Download, Shield, Cpu, Layers } from 'lucide-react';
+import { Settings, Globe, X, Check, ShieldCheck, Moon, Sun, Laptop, Trash2, Sparkles, Lock, Mic, Image, Download, Shield, Cpu, Layers, Compass, HelpCircle } from 'lucide-react';
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenAutoCleanup?: () => void;
   onOpenIntegrations?: () => void;
+  onOpenTour?: () => void;
 }
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onOpenAutoCleanup, onOpenIntegrations }) => {
+export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onOpenAutoCleanup, onOpenIntegrations, onOpenTour }) => {
   const { language, setLanguage, t } = useLanguage();
   const { theme, setThemeMode, isDark } = useTheme();
   const { permissions, grantPermission, revokePermission } = usePermissions();
@@ -285,6 +286,33 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
             </div>
           </div>
         </div>
+
+        {/* App Tour Guide Card */}
+        {onOpenTour && (
+          <div className="bg-gradient-to-r from-amber-950/40 via-slate-950 to-amber-950/20 border border-amber-500/40 p-3 rounded-xl flex items-center justify-between gap-2 text-xs">
+            <div className="space-y-0.5">
+              <div className="font-bold text-white flex items-center gap-1.5">
+                <Compass className="w-4 h-4 text-amber-400" />
+                <span>{language === 'ar' ? 'جولة تعارفية ودليل الاستخدام' : 'App Interactive Tour Guide'}</span>
+              </div>
+              <p className="text-[10px] text-slate-400">
+                {language === 'ar' ? 'عرض الدليل التفاعلي لشرح ميزات وأقسام المنصة للمستخدمين الجدد' : 'Re-run the interactive onboarding tour to explore all features'}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onOpenTour();
+              }}
+              className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-lg text-xs transition-all shadow shrink-0 flex items-center gap-1 cursor-pointer"
+            >
+              <HelpCircle className="w-3.5 h-3.5" />
+              <span>{language === 'ar' ? 'بدء الجولة 🧭' : 'Start Tour 🧭'}</span>
+            </button>
+          </div>
+        )}
 
         {/* Connected Programs & Integrations Suite */}
         {onOpenIntegrations && (

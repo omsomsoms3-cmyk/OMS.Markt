@@ -23,6 +23,8 @@ import { QuickShareButtons } from './QuickShareButtons';
 import { PostDateBadge } from './PostDateBadge';
 import { getListingDate } from '../lib/dateUtils';
 import { LazyImage } from './LazyImage';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
+import { InfiniteScrollLoader } from './InfiniteScrollLoader';
 
 interface CarsSectionProps {
   searchQuery?: string;
@@ -115,6 +117,13 @@ export const CarsSection: React.FC<CarsSectionProps> = ({ searchQuery = '' }) =>
     if (res.success && res.method === 'clipboard') {
       alert(language === 'ar' ? 'تم نسخ رابط ومعلومات الإعلان بنجاح (Web Share) 📋' : 'Listing link and details copied to clipboard!');
     }
+  };
+
+  const handleNativeShare = async (item: CarListing) => {
+    const shareTitle = item.title;
+    const shareText = `شاهد هذا الإعلان على منصة OMS: ${item.title} - بسعر $${item.priceUSD.toLocaleString()} (${item.priceSYP.toLocaleString()} ل.س) - المحافظة: ${item.city}`;
+    const shareUrl = `${window.location.origin}${window.location.pathname}?tab=cars&id=${item.id}`;
+    await shareListingItem({ title: shareTitle, text: shareText, url: shareUrl });
   };
 
   const handleToggleCarBookmark = (item: CarListing) => {
@@ -212,6 +221,20 @@ export const CarsSection: React.FC<CarsSectionProps> = ({ searchQuery = '' }) =>
       const timeB = getListingDate(b.createdAt).getTime();
       return timeB - timeA;
     });
+
+  const {
+    displayedItems,
+    visibleCount,
+    hasMore,
+    isLoadingMore,
+    loadMore,
+    observerTargetRef,
+    totalCount,
+  } = useInfiniteScroll<CarListing>(filteredItems, {
+    initialCount: 12,
+    step: 12,
+    dependencies: [filterCondition, filterCategory, filterCity, minPrice, maxPrice, dateFilter, sortOption, searchQuery],
+  });
 
   return (
     <div className="p-4 max-w-7xl w-full mx-auto space-y-6">
@@ -470,7 +493,7 @@ export const CarsSection: React.FC<CarsSectionProps> = ({ searchQuery = '' }) =>
 
       {/* Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-        {filteredItems.map((item, index) => (
+        {displayedItems.map((item, index) => (
           <div
             key={item.id}
             onClick={() => setDetailItem(item)}
@@ -524,29 +547,42 @@ export const CarsSection: React.FC<CarsSectionProps> = ({ searchQuery = '' }) =>
                 />
               )}
 
-              {/* Floating Quick Bookmark Icon Button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleToggleCarBookmark(item);
-                }}
-                title={
-                  isBookmarked(item.id)
-                    ? (language === 'ar' ? 'الإعلان محفوظ في المفضلة 🔖' : 'Saved 🔖')
-                    : (language === 'ar' ? 'إضافة للمفضلة 🔖' : 'Bookmark 🔖')
-                }
-                className={`absolute top-2 left-2 p-1.5 rounded-xl border backdrop-blur-md transition-all active:scale-90 shadow-md cursor-pointer z-10 flex items-center justify-center ${
-                  isBookmarked(item.id)
-                    ? 'bg-amber-400 text-slate-950 border-amber-300 ring-1 ring-amber-400/50 shadow-amber-500/30'
-                    : 'bg-white/80 dark:bg-slate-950/80 hover:bg-amber-500 hover:text-slate-950 text-amber-500 dark:text-amber-400 border-slate-200 dark:border-slate-700/80'
-                }`}
-              >
-                {isBookmarked(item.id) ? (
-                  <BookmarkCheck className="w-3.5 h-3.5 fill-slate-950 text-slate-950" />
-                ) : (
-                  <Bookmark className="w-3.5 h-3.5" />
-                )}
-              </button>
+              {/* Floating Quick Bookmark & Web Share API Buttons */}
+              <div className="absolute top-2 left-2 z-10 flex items-center gap-1">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggleCarBookmark(item);
+                  }}
+                  title={
+                    isBookmarked(item.id)
+                      ? (language === 'ar' ? 'الإعلان محفوظ في المفضلة 🔖' : 'Saved 🔖')
+                      : (language === 'ar' ? 'إضافة للمفضلة 🔖' : 'Bookmark 🔖')
+                  }
+                  className={`p-1.5 rounded-xl border backdrop-blur-md transition-all active:scale-90 shadow-md cursor-pointer flex items-center justify-center ${
+                    isBookmarked(item.id)
+                      ? 'bg-amber-400 text-slate-950 border-amber-300 ring-1 ring-amber-400/50 shadow-amber-500/30'
+                      : 'bg-white/80 dark:bg-slate-950/80 hover:bg-amber-500 hover:text-slate-950 text-amber-500 dark:text-amber-400 border-slate-200 dark:border-slate-700/80'
+                  }`}
+                >
+                  {isBookmarked(item.id) ? (
+                    <BookmarkCheck className="w-3.5 h-3.5 fill-slate-950 text-slate-950" />
+                  ) : (
+                    <Bookmark className="w-3.5 h-3.5" />
+                  )}
+                </button>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleNativeShare(item);
+                  }}
+                  title={language === 'ar' ? 'مشاركة الإعلان عبر التطبيقات (Web Share)' : 'Native Share'}
+                  className="p-1.5 rounded-xl border backdrop-blur-md transition-all active:scale-90 shadow-md cursor-pointer flex items-center justify-center bg-white/80 dark:bg-slate-950/80 hover:bg-cyan-500 hover:text-slate-950 text-cyan-500 dark:text-cyan-400 border-slate-200 dark:border-slate-700/80"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
 
               <div className="absolute top-2 right-2 flex items-center gap-1">
                 <span
@@ -610,6 +646,14 @@ export const CarsSection: React.FC<CarsSectionProps> = ({ searchQuery = '' }) =>
                 </button>
 
                 <button
+                  onClick={() => handleNativeShare(item)}
+                  title={language === 'ar' ? 'مشاركة الإعلان عبر التطبيقات (Web Share)' : 'Native Share'}
+                  className="p-1.5 min-h-[30px] bg-slate-800 hover:bg-cyan-500 hover:text-slate-950 text-cyan-400 border border-cyan-500/30 rounded-lg font-bold text-xs flex items-center justify-center transition-all active:scale-95 cursor-pointer shrink-0"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                </button>
+
+                <button
                   onClick={() => setDetailItem(item)}
                   title={language === 'ar' ? 'عرض باقي التفاصيل والتأكيدات' : 'View Details'}
                   className="p-1.5 min-h-[30px] bg-slate-800 hover:bg-slate-700 text-sky-300 border border-sky-500/30 rounded-lg font-bold text-xs flex items-center justify-center transition-all active:scale-95 cursor-pointer shrink-0"
@@ -621,6 +665,17 @@ export const CarsSection: React.FC<CarsSectionProps> = ({ searchQuery = '' }) =>
           </div>
         ))}
       </div>
+
+      {/* Infinite Scroll Indicator */}
+      <InfiniteScrollLoader
+        observerTargetRef={observerTargetRef}
+        hasMore={hasMore}
+        isLoadingMore={isLoadingMore}
+        visibleCount={visibleCount}
+        totalCount={totalCount}
+        onLoadMore={loadMore}
+        language={language}
+      />
 
       {/* Payment Gateway Modal */}
       <PaymentModal

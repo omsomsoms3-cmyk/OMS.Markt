@@ -10,6 +10,8 @@ import { shareListingItem } from '../lib/share';
 import { useBookmarks } from '../context/BookmarkContext';
 import { INTERNATIONAL_COUNTRIES } from '../lib/locations';
 import { QuickShareButtons } from './QuickShareButtons';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
+import { InfiniteScrollLoader } from './InfiniteScrollLoader';
 
 interface TaxiDeliverySectionProps {
   searchQuery?: string;
@@ -42,6 +44,20 @@ export const TaxiDeliverySection: React.FC<TaxiDeliverySectionProps> = ({ search
       ord.phone.includes(query) ||
       (ord.notes && ord.notes.toLowerCase().includes(query))
     );
+  });
+
+  const {
+    displayedItems,
+    visibleCount,
+    hasMore,
+    isLoadingMore,
+    loadMore,
+    observerTargetRef,
+    totalCount,
+  } = useInfiniteScroll<TaxiDeliveryOrder>(filteredOrders, {
+    initialCount: 10,
+    step: 10,
+    dependencies: [searchQuery],
   });
 
   const handleShareTaxiOrder = async (ord: TaxiDeliveryOrder) => {
@@ -256,7 +272,7 @@ export const TaxiDeliverySection: React.FC<TaxiDeliverySectionProps> = ({ search
                 لا توجد طلبات تكسي أو توصيل تطابق البحث الحقيقي.
               </div>
             ) : (
-              filteredOrders.map((ord) => (
+              displayedItems.map((ord) => (
               <div
                 key={ord.id}
                 className="bg-white dark:bg-slate-800/90 border border-emerald-500/25 dark:border-slate-700 rounded-xl p-4 shadow-md hover:shadow-lg transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-slate-900 dark:text-white"
@@ -274,21 +290,34 @@ export const TaxiDeliverySection: React.FC<TaxiDeliverySectionProps> = ({ search
                       <span className="text-xs text-slate-500">| {ord.createdAt}</span>
                     </div>
 
-                    {/* Quick Bookmark Header Icon Button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleToggleTaxiBookmark(ord);
-                      }}
-                      title={isBookmarked(ord.id) ? 'الطلب محفوظ في المفضلة المحلية 🔖' : 'حفظ سريع في المفضلة 🔖'}
-                      className={`p-1.5 rounded-xl border transition-all active:scale-90 shadow-md cursor-pointer shrink-0 flex items-center gap-1 ${
-                        isBookmarked(ord.id)
-                          ? 'bg-amber-400 text-slate-950 border-amber-300 ring-2 ring-amber-400/50 shadow-amber-500/30'
-                          : 'bg-slate-950/80 hover:bg-amber-500 hover:text-slate-950 text-amber-400 border-slate-700/80'
-                      }`}
-                    >
-                      {isBookmarked(ord.id) ? <BookmarkCheck className="w-3.5 h-3.5 fill-slate-950 text-slate-950" /> : <Bookmark className="w-3.5 h-3.5" />}
-                    </button>
+                    {/* Quick Bookmark & Native Web Share Header Icon Buttons */}
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleTaxiBookmark(ord);
+                        }}
+                        title={isBookmarked(ord.id) ? 'الطلب محفوظ في المفضلة المحلية 🔖' : 'حفظ سريع في المفضلة 🔖'}
+                        className={`p-1.5 rounded-xl border transition-all active:scale-90 shadow-md cursor-pointer flex items-center gap-1 ${
+                          isBookmarked(ord.id)
+                            ? 'bg-amber-400 text-slate-950 border-amber-300 ring-2 ring-amber-400/50 shadow-amber-500/30'
+                            : 'bg-slate-950/80 hover:bg-amber-500 hover:text-slate-950 text-amber-400 border-slate-700/80'
+                        }`}
+                      >
+                        {isBookmarked(ord.id) ? <BookmarkCheck className="w-3.5 h-3.5 fill-slate-950 text-slate-950" /> : <Bookmark className="w-3.5 h-3.5" />}
+                      </button>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleShareTaxiOrder(ord);
+                        }}
+                        title="مشاركة الطلب عبر التطبيقات (Web Share)"
+                        className="p-1.5 rounded-xl border border-cyan-500/40 bg-slate-950/80 hover:bg-cyan-500 hover:text-slate-950 text-cyan-400 transition-all active:scale-90 shadow-md cursor-pointer flex items-center justify-center"
+                      >
+                        <Share2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="flex items-center space-x-2 space-x-reverse font-bold text-white text-sm">
@@ -327,6 +356,14 @@ export const TaxiDeliverySection: React.FC<TaxiDeliverySectionProps> = ({ search
                       }`}
                     >
                       {isBookmarked(ord.id) ? <BookmarkCheck className="w-3.5 h-3.5 text-slate-950" /> : <Bookmark className="w-3.5 h-3.5" />}
+                    </button>
+                    <button
+                      onClick={() => handleShareTaxiOrder(ord)}
+                      title="مشاركة الطلب مباشرة عبر التطبيقات (Web Share)"
+                      className="p-2 bg-cyan-500/20 hover:bg-cyan-500 hover:text-slate-950 text-cyan-400 border border-cyan-500/40 rounded-xl transition-all active:scale-95 text-xs flex items-center gap-1 cursor-pointer"
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
+                      <span className="text-[11px] font-bold">مشاركة</span>
                     </button>
                     <button
                       onClick={() => setShareOrder(ord)}
@@ -368,6 +405,16 @@ export const TaxiDeliverySection: React.FC<TaxiDeliverySectionProps> = ({ search
             )))}
 
           </div>
+
+          {/* Infinite Scroll Indicator */}
+          <InfiniteScrollLoader
+            observerTargetRef={observerTargetRef}
+            hasMore={hasMore}
+            isLoadingMore={isLoadingMore}
+            visibleCount={visibleCount}
+            totalCount={totalCount}
+            onLoadMore={loadMore}
+          />
         </div>
       </div>
 

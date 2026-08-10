@@ -3,6 +3,7 @@ import { X, Phone, MessageSquare, Share2, QrCode, Bookmark, BookmarkCheck, Tag, 
 import { useLanguage } from '../context/LanguageContext';
 import { useBookmarks } from '../context/BookmarkContext';
 import { LazyImage } from './LazyImage';
+import { shareListingItem } from '../lib/share';
 
 interface AdDetailModalProps {
   isOpen: boolean;
@@ -126,18 +127,32 @@ export const AdDetailModal: React.FC<AdDetailModalProps> = ({
                   </>
                 )}
 
-                {/* Heart Bookmark Button Overlay */}
-                <button
-                  onClick={handleToggleBookmark}
-                  className={`absolute top-3 left-3 p-2.5 rounded-2xl border backdrop-blur-md transition-all active:scale-90 shadow-xl cursor-pointer ${
-                    bookmarked
-                      ? 'bg-amber-400 text-slate-950 border-amber-300 ring-2 ring-amber-400/50'
-                      : 'bg-slate-950/85 text-amber-400 border-amber-500/40 hover:border-amber-400'
-                  }`}
-                  title={bookmarked ? 'محفوظ في المفضلة' : 'حفظ الإعلان'}
-                >
-                  {bookmarked ? <BookmarkCheck className="w-5 h-5 fill-slate-950 text-slate-950" /> : <Bookmark className="w-5 h-5" />}
-                </button>
+                {/* Heart Bookmark & Web Share Button Overlay */}
+                <div className="absolute top-3 left-3 z-10 flex items-center gap-2">
+                  <button
+                    onClick={handleToggleBookmark}
+                    className={`p-2.5 rounded-2xl border backdrop-blur-md transition-all active:scale-90 shadow-xl cursor-pointer ${
+                      bookmarked
+                        ? 'bg-amber-400 text-slate-950 border-amber-300 ring-2 ring-amber-400/50'
+                        : 'bg-slate-950/85 text-amber-400 border-amber-500/40 hover:border-amber-400'
+                    }`}
+                    title={bookmarked ? 'محفوظ في المفضلة' : 'حفظ الإعلان'}
+                  >
+                    {bookmarked ? <BookmarkCheck className="w-5 h-5 fill-slate-950 text-slate-950" /> : <Bookmark className="w-5 h-5" />}
+                  </button>
+
+                  <button
+                    onClick={async () => {
+                      const shareTitle = item.title || `${item.fromCity} ➔ ${item.toArea}`;
+                      const shareText = item.description || `إعلان مميز على منصة OMS: ${shareTitle}`;
+                      await shareListingItem({ title: shareTitle, text: shareText, url: window.location.href });
+                    }}
+                    className="p-2.5 rounded-2xl border backdrop-blur-md transition-all active:scale-90 shadow-xl cursor-pointer bg-slate-950/85 text-cyan-400 border-cyan-500/40 hover:bg-cyan-500 hover:text-slate-950"
+                    title="مشاركة الإعلان المباشرة عبر التطبيقات (Web Share)"
+                  >
+                    <Share2 className="w-5 h-5" />
+                  </button>
+                </div>
 
                 {/* Condition Micro Badge Overlay (Very Small & Non-Intrusive) */}
                 {item.condition && (
@@ -342,13 +357,28 @@ export const AdDetailModal: React.FC<AdDetailModalProps> = ({
                       </button>
                     )}
 
+                    <button
+                      onClick={async () => {
+                        const shareTitle = item.title || `${item.fromCity} ➔ ${item.toArea}`;
+                        const shareText = item.description || `إعلان مميز على منصة OMS: ${shareTitle}`;
+                        const res = await shareListingItem({ title: shareTitle, text: shareText, url: window.location.href });
+                        if (res.success && res.method === 'clipboard') {
+                          alert(language === 'ar' ? 'تم نسخ معلومات ورابط الإعلان إلى الحافظة 📋' : 'Listing copied to clipboard!');
+                        }
+                      }}
+                      className="min-h-[42px] flex items-center justify-center gap-1.5 py-2 px-3 bg-cyan-500/15 hover:bg-cyan-500 hover:text-slate-950 text-cyan-600 dark:text-cyan-400 border border-cyan-500/40 rounded-xl font-bold transition-all cursor-pointer"
+                    >
+                      <Share2 className="w-4 h-4" />
+                      <span>مشاركة 📲</span>
+                    </button>
+
                     {onOpenShare && (
                       <button
                         onClick={() => onOpenShare(item)}
-                        className="min-h-[42px] flex items-center justify-center gap-1.5 py-2 px-3 bg-cyan-500/15 hover:bg-cyan-500 hover:text-slate-950 text-cyan-600 dark:text-cyan-400 border border-amber-500/40 rounded-xl font-bold transition-all cursor-pointer"
+                        className="min-h-[42px] flex items-center justify-center gap-1.5 py-2 px-3 bg-amber-500/15 hover:bg-amber-500 hover:text-slate-950 text-amber-600 dark:text-amber-400 border border-amber-500/40 rounded-xl font-bold transition-all cursor-pointer"
                       >
                         <QrCode className="w-4 h-4" />
-                        <span>QR ومشاركة 🏁</span>
+                        <span>رمز QR 🏁</span>
                       </button>
                     )}
 

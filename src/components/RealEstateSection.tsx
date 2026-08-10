@@ -18,6 +18,8 @@ import { ListingFilterChips, PricePresetOption } from './ListingFilterChips';
 import { useReports } from '../context/ReportContext';
 import { QuickShareButtons } from './QuickShareButtons';
 import { LazyImage } from './LazyImage';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
+import { InfiniteScrollLoader } from './InfiniteScrollLoader';
 
 interface RealEstateSectionProps {
   searchQuery?: string;
@@ -164,6 +166,20 @@ export const RealEstateSection: React.FC<RealEstateSectionProps> = ({ searchQuer
       const timeB = getListingDate(b.createdAt).getTime();
       return timeB - timeA;
     });
+
+  const {
+    displayedItems,
+    visibleCount,
+    hasMore,
+    isLoadingMore,
+    loadMore,
+    observerTargetRef,
+    totalCount,
+  } = useInfiniteScroll<RealEstateListing>(filtered, {
+    initialCount: 12,
+    step: 12,
+    dependencies: [filterType, filterCategory, filterCity, minPrice, maxPrice, dateFilter, sortOption, searchQuery],
+  });
 
   const handleShareRealEstate = async (item: RealEstateListing) => {
     const res = await shareListingItem({
@@ -448,7 +464,7 @@ export const RealEstateSection: React.FC<RealEstateSectionProps> = ({ searchQuer
 
       {/* Grid Listings */}
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-        {filtered.map((item, index) => (
+        {displayedItems.map((item, index) => (
           <div
             key={item.id}
             onClick={() => setDetailItem(item)}
@@ -469,25 +485,38 @@ export const RealEstateSection: React.FC<RealEstateSectionProps> = ({ searchQuer
                 </span>
               </div>
 
-              {/* Bookmark Overlay Button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleToggleRealEstateBookmark(item);
-                }}
-                title={isBookmarked(item.id) ? 'محفوظ' : 'حفظ'}
-                className={`absolute top-2 left-2 p-1.5 rounded-xl border backdrop-blur-md transition-all active:scale-90 shadow-md cursor-pointer z-10 ${
-                  isBookmarked(item.id)
-                    ? 'bg-amber-400 text-slate-950 border-amber-300'
-                    : 'bg-white/80 dark:bg-slate-950/80 text-amber-500 border-slate-200 dark:border-slate-700'
-                }`}
-              >
-                {isBookmarked(item.id) ? (
-                  <BookmarkCheck className="w-3.5 h-3.5 fill-slate-950 text-slate-950" />
-                ) : (
-                  <Bookmark className="w-3.5 h-3.5" />
-                )}
-              </button>
+              {/* Bookmark & Web Share Overlay Buttons */}
+              <div className="absolute top-2 left-2 z-10 flex items-center gap-1">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggleRealEstateBookmark(item);
+                  }}
+                  title={isBookmarked(item.id) ? 'محفوظ' : 'حفظ'}
+                  className={`p-1.5 rounded-xl border backdrop-blur-md transition-all active:scale-90 shadow-md cursor-pointer ${
+                    isBookmarked(item.id)
+                      ? 'bg-amber-400 text-slate-950 border-amber-300'
+                      : 'bg-white/80 dark:bg-slate-950/80 text-amber-500 border-slate-200 dark:border-slate-700'
+                  }`}
+                >
+                  {isBookmarked(item.id) ? (
+                    <BookmarkCheck className="w-3.5 h-3.5 fill-slate-950 text-slate-950" />
+                  ) : (
+                    <Bookmark className="w-3.5 h-3.5" />
+                  )}
+                </button>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleShareRealEstate(item);
+                  }}
+                  title={language === 'ar' ? 'مشاركة الإعلان العقاري عبر التطبيقات' : 'Native Share'}
+                  className="p-1.5 rounded-xl border backdrop-blur-md transition-all active:scale-90 shadow-md cursor-pointer bg-white/80 dark:bg-slate-950/80 text-cyan-500 dark:text-cyan-400 border-slate-200 dark:border-slate-700 hover:bg-cyan-500 hover:text-slate-950"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
 
               <span className="absolute bottom-2 right-2 bg-slate-900/90 text-white text-[10px] px-2 py-0.5 rounded-md border border-slate-700 backdrop-blur font-medium flex items-center gap-1">
                 <MapPin className="w-2.5 h-2.5 text-emerald-400" />
@@ -543,6 +572,14 @@ export const RealEstateSection: React.FC<RealEstateSectionProps> = ({ searchQuer
                 </button>
 
                 <button
+                  onClick={() => handleShareRealEstate(item)}
+                  title={language === 'ar' ? 'مشاركة الإعلان العقاري عبر التطبيقات (Web Share)' : 'Native Share'}
+                  className="p-1.5 min-h-[30px] bg-slate-800 hover:bg-cyan-500 hover:text-slate-950 text-cyan-400 border border-cyan-500/30 rounded-lg font-bold text-xs flex items-center justify-center transition-all active:scale-95 cursor-pointer shrink-0"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                </button>
+
+                <button
                   onClick={() => setDetailItem(item)}
                   title={language === 'ar' ? 'عرض باقي التفاصيل والتأكيدات' : 'View Details'}
                   className="p-1.5 min-h-[30px] bg-slate-800 hover:bg-slate-700 text-sky-300 border border-sky-500/30 rounded-lg font-bold text-xs flex items-center justify-center transition-all active:scale-95 cursor-pointer shrink-0"
@@ -554,6 +591,17 @@ export const RealEstateSection: React.FC<RealEstateSectionProps> = ({ searchQuer
           </div>
         ))}
       </div>
+
+      {/* Infinite Scroll Indicator */}
+      <InfiniteScrollLoader
+        observerTargetRef={observerTargetRef}
+        hasMore={hasMore}
+        isLoadingMore={isLoadingMore}
+        visibleCount={visibleCount}
+        totalCount={totalCount}
+        onLoadMore={loadMore}
+        language={language}
+      />
 
       {/* Share Real Estate Item Modal */}
       <ShareAppModal

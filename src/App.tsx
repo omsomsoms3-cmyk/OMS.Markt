@@ -32,6 +32,7 @@ import { OfflineStatusBanner } from './components/OfflineStatusBanner';
 import { FCMNotificationModal } from './components/FCMNotificationModal';
 import { NotificationToast } from './components/NotificationToast';
 import { AppModeModal } from './components/AppModeModal';
+import { AppTourModal } from './components/AppTourModal';
 import { BottomNavBar } from './components/BottomNavBar';
 import { initFirebaseMessaging, setupFCMForegroundListener, subscribeToNotificationAlerts, FCMNotification } from './lib/messaging';
 import { PlusCircle, Sparkles, Home, Zap } from 'lucide-react';
@@ -48,6 +49,7 @@ function MainAppContent() {
   const [isIntegrationsOpen, setIsIntegrationsOpen] = useState(false);
   const [isFCMNotificationsOpen, setIsFCMNotificationsOpen] = useState(false);
   const [isAppModeModalOpen, setIsAppModeModalOpen] = useState(false);
+  const [isTourOpen, setIsTourOpen] = useState(false);
   const [notifications, setNotifications] = useState<FCMNotification[]>([]);
   const [activeToast, setActiveToast] = useState<FCMNotification | null>(null);
   const { isLoggedIn: isAuthLoggedIn, userEmail: authEmail, logout } = useAuth();
@@ -68,6 +70,18 @@ function MainAppContent() {
       setNotifications((prev) => [newNotif, ...prev]);
       setActiveToast(newNotif);
     });
+
+    // Automatically trigger onboarding Tour for first time visitors
+    const tourCompleted = localStorage.getItem('oms_tour_completed');
+    if (!tourCompleted) {
+      const timer = setTimeout(() => {
+        setIsTourOpen(true);
+      }, 1000);
+      return () => {
+        clearTimeout(timer);
+        unsubscribe();
+      };
+    }
 
     return () => unsubscribe();
   }, []);
@@ -121,6 +135,7 @@ function MainAppContent() {
         onOpenNotifications={() => setIsFCMNotificationsOpen(true)}
         onOpenIntegrations={() => setIsIntegrationsOpen(true)}
         onOpenAppModeModal={() => setIsAppModeModalOpen(true)}
+        onOpenTour={() => setIsTourOpen(true)}
         unreadNotificationsCount={unreadCount}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
@@ -211,6 +226,15 @@ function MainAppContent() {
         onClose={() => setIsSettingsOpen(false)}
         onOpenAutoCleanup={() => setIsAutoCleanupOpen(true)}
         onOpenIntegrations={() => setIsIntegrationsOpen(true)}
+        onOpenTour={() => setIsTourOpen(true)}
+      />
+
+      {/* Interactive Onboarding App Tour Modal */}
+      <AppTourModal
+        isOpen={isTourOpen}
+        onClose={() => setIsTourOpen(false)}
+        onSelectTab={(tab) => setActiveTab(tab)}
+        onOpenCreateAd={() => setIsCreateAdOpen(true)}
       />
 
       {/* Auto Cleanup Program Modal */}

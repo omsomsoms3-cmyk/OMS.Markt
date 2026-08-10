@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useBookmarks } from '../context/BookmarkContext';
 import { useLanguage } from '../context/LanguageContext';
+import { SavedListingItem } from '../types';
 import {
   Bookmark,
   BookmarkCheck,
@@ -35,6 +36,8 @@ import { broadcastNotification } from '../lib/messaging';
 import { QuickShareButtons } from './QuickShareButtons';
 import { exportBookmarksToCSV } from '../lib/exportCSV';
 import { LazyImage } from './LazyImage';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
+import { InfiniteScrollLoader } from './InfiniteScrollLoader';
 
 export const SavedListingsSection: React.FC = () => {
   const { bookmarks, removeBookmark, clearAllBookmarks, confirmBookmark, unconfirmBookmark } = useBookmarks();
@@ -129,6 +132,20 @@ export const SavedListingsSection: React.FC = () => {
       item.subtitle.toLowerCase().includes(search.toLowerCase()) ||
       item.city.toLowerCase().includes(search.toLowerCase());
     return matchesType && matchesConfirmation && matchesSearch;
+  });
+
+  const {
+    displayedItems,
+    visibleCount,
+    hasMore,
+    isLoadingMore,
+    loadMore,
+    observerTargetRef,
+    totalCount,
+  } = useInfiniteScroll<SavedListingItem>(filteredBookmarks, {
+    initialCount: 12,
+    step: 12,
+    dependencies: [filterType, confirmationFilter, search],
   });
 
   const getItemTypeBadge = (type: string) => {
@@ -326,7 +343,7 @@ export const SavedListingsSection: React.FC = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredBookmarks.map((item) => {
+          {displayedItems.map((item) => {
             const badge = getItemTypeBadge(item.itemType);
             return (
               <div
@@ -487,6 +504,17 @@ export const SavedListingsSection: React.FC = () => {
           })}
         </div>
       )}
+
+      {/* Infinite Scroll Indicator */}
+      <InfiniteScrollLoader
+        observerTargetRef={observerTargetRef}
+        hasMore={hasMore}
+        isLoadingMore={isLoadingMore}
+        visibleCount={visibleCount}
+        totalCount={totalCount}
+        onLoadMore={loadMore}
+        language={language}
+      />
 
       {/* Confirmation Modal */}
       {confirmingItemId && activeItemToConfirm && (

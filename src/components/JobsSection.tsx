@@ -13,6 +13,8 @@ import { INTERNATIONAL_COUNTRIES } from '../lib/locations';
 import { ListingFilterChips, PricePresetOption } from './ListingFilterChips';
 import { useReports } from '../context/ReportContext';
 import { QuickShareButtons } from './QuickShareButtons';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
+import { InfiniteScrollLoader } from './InfiniteScrollLoader';
 
 interface JobsSectionProps {
   searchQuery?: string;
@@ -90,6 +92,13 @@ export const JobsSection: React.FC<JobsSectionProps> = ({ searchQuery = '' }) =>
     if (res.success && res.method === 'clipboard') {
       alert(language === 'ar' ? 'تم نسخ تفاصيل ورابط فرصة العمل بنجاح (Web Share) 📋' : 'Job offer details and link copied to clipboard!');
     }
+  };
+
+  const handleShareJobNative = async (job: JobListing) => {
+    const shareTitle = `${job.title} - ${job.company}`;
+    const shareText = `فرصة عمل مميزة على منصة OMS: ${job.title} لدى ${job.company} في ${job.city} - الراتب: ${job.salarySYP.toLocaleString()} ل.س`;
+    const shareUrl = `${window.location.origin}${window.location.pathname}?tab=jobs&id=${job.id}`;
+    await shareListingItem({ title: shareTitle, text: shareText, url: shareUrl });
   };
 
   const handleToggleJobBookmark = (job: JobListing) => {
@@ -171,6 +180,20 @@ export const JobsSection: React.FC<JobsSectionProps> = ({ searchQuery = '' }) =>
       if (sortOption === 'salary_asc') return (a.salaryUSD || 0) - (b.salaryUSD || 0);
       return b.id.localeCompare(a.id);
     });
+
+  const {
+    displayedItems,
+    visibleCount,
+    hasMore,
+    isLoadingMore,
+    loadMore,
+    observerTargetRef,
+    totalCount,
+  } = useInfiniteScroll<JobListing>(filteredJobs, {
+    initialCount: 12,
+    step: 12,
+    dependencies: [filterCategory, filterType, filterCity, minSalaryUSD, maxSalaryUSD, dateFilter, sortOption, searchQuery],
+  });
 
   const handleCreateJob = (e: React.FormEvent) => {
     e.preventDefault();
@@ -454,7 +477,7 @@ export const JobsSection: React.FC<JobsSectionProps> = ({ searchQuery = '' }) =>
             </button>
           </div>
         ) : (
-          filteredJobs.map((job) => (
+          displayedItems.map((job) => (
             <div
               key={job.id}
               className={`bg-white dark:bg-slate-900 border rounded-3xl p-5 space-y-4 transition-all duration-200 hover:border-emerald-500/50 flex flex-col justify-between relative overflow-hidden shadow-md hover:shadow-xl ${
@@ -481,29 +504,42 @@ export const JobsSection: React.FC<JobsSectionProps> = ({ searchQuery = '' }) =>
                     </h3>
                   </div>
 
-                  {/* Quick Bookmark Button Header */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleToggleJobBookmark(job);
-                    }}
-                    title={
-                      isBookmarked(job.id)
-                        ? (language === 'ar' ? 'الوظيفة محفوظة في المفضلة المحلية 🔖' : 'Saved in local bookmarks 🔖')
-                        : (language === 'ar' ? 'حفظ سريع في المفضلة 🔖' : 'Quick Bookmark 🔖')
-                    }
-                    className={`p-2 rounded-xl border transition-all active:scale-90 shadow-md cursor-pointer shrink-0 flex items-center gap-1 ${
-                      isBookmarked(job.id)
-                        ? 'bg-amber-400 text-slate-950 border-amber-300 ring-2 ring-amber-400/50 shadow-amber-500/30'
-                        : 'bg-slate-100 hover:bg-amber-500 dark:bg-slate-950/80 hover:text-slate-950 text-amber-600 dark:text-amber-400 border-slate-200 dark:border-slate-700/80'
-                    }`}
-                  >
-                    {isBookmarked(job.id) ? (
-                      <BookmarkCheck className="w-4 h-4 fill-slate-950 text-slate-950" />
-                    ) : (
-                      <Bookmark className="w-4 h-4" />
-                    )}
-                  </button>
+                  {/* Quick Bookmark & Native Web Share Buttons Header */}
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleJobBookmark(job);
+                      }}
+                      title={
+                        isBookmarked(job.id)
+                          ? (language === 'ar' ? 'الوظيفة محفوظة في المفضلة المحلية 🔖' : 'Saved in local bookmarks 🔖')
+                          : (language === 'ar' ? 'حفظ سريع في المفضلة 🔖' : 'Quick Bookmark 🔖')
+                      }
+                      className={`p-2 rounded-xl border transition-all active:scale-90 shadow-md cursor-pointer flex items-center gap-1 ${
+                        isBookmarked(job.id)
+                          ? 'bg-amber-400 text-slate-950 border-amber-300 ring-2 ring-amber-400/50 shadow-amber-500/30'
+                          : 'bg-slate-100 hover:bg-amber-500 dark:bg-slate-950/80 hover:text-slate-950 text-amber-600 dark:text-amber-400 border-slate-200 dark:border-slate-700/80'
+                      }`}
+                    >
+                      {isBookmarked(job.id) ? (
+                        <BookmarkCheck className="w-4 h-4 fill-slate-950 text-slate-950" />
+                      ) : (
+                        <Bookmark className="w-4 h-4" />
+                      )}
+                    </button>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleShareJobNative(job);
+                      }}
+                      title={language === 'ar' ? 'مشاركة الوظيفة عبر التطبيقات (Web Share)' : 'Native Share'}
+                      className="p-2 bg-slate-100 hover:bg-cyan-500 hover:text-slate-950 dark:bg-slate-950/80 text-cyan-600 dark:text-cyan-400 border border-slate-200 dark:border-slate-700/80 rounded-xl transition-all active:scale-90 shadow-md cursor-pointer flex items-center justify-center"
+                    >
+                      <Share2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-slate-400 font-medium">
@@ -609,12 +645,19 @@ export const JobsSection: React.FC<JobsSectionProps> = ({ searchQuery = '' }) =>
                   </button>
 
                   <button
+                    onClick={() => handleShareJobNative(job)}
+                    title={language === 'ar' ? 'مشاركة الوظيفة عبر التطبيقات (Web Share)' : 'Native Share'}
+                    className="p-2 bg-cyan-500/20 hover:bg-cyan-500 hover:text-slate-950 text-cyan-400 border border-cyan-500/40 rounded-xl transition-all active:scale-95 flex items-center gap-1 cursor-pointer"
+                  >
+                    <Share2 className="w-4 h-4" />
+                  </button>
+
+                  <button
                     onClick={() => setShareJob(job)}
-                    title={language === 'ar' ? 'رمز QR ومشاركة الفرصة' : 'QR Code & Share Job'}
+                    title={language === 'ar' ? 'رمز QR وبطاقة المشاركة' : 'QR Code & Card'}
                     className="p-2 bg-amber-500/20 hover:bg-amber-500 hover:text-slate-950 text-amber-400 border border-amber-500/40 rounded-xl transition-all active:scale-95 flex items-center gap-1 cursor-pointer"
                   >
                     <QrCode className="w-4 h-4" />
-                    <Share2 className="w-3.5 h-3.5 opacity-80" />
                   </button>
 
                   <button
@@ -672,6 +715,17 @@ export const JobsSection: React.FC<JobsSectionProps> = ({ searchQuery = '' }) =>
         )}
 
       </div>
+
+      {/* Infinite Scroll Indicator */}
+      <InfiniteScrollLoader
+        observerTargetRef={observerTargetRef}
+        hasMore={hasMore}
+        isLoadingMore={isLoadingMore}
+        visibleCount={visibleCount}
+        totalCount={totalCount}
+        onLoadMore={loadMore}
+        language={language}
+      />
 
       {/* Share Job Modal */}
       <ShareAppModal

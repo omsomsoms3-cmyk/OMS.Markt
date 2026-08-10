@@ -3,7 +3,7 @@ import { TabType } from '../types';
 import { OmsLogo } from './OmsLogo';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
-import { Globe, TrendingUp, Home, Car, ShoppingBag, Truck, BookOpen, MessageSquare, ExternalLink, Settings, Languages, User, PlusCircle, Search, X, ChevronRight, ChevronDown, SlidersHorizontal, Tag, MapPin, Share2, Briefcase, Flag, ShieldAlert, Sun, Moon, Bell, BellRing, History, Clock, Trash2, Bookmark, Zap, Mic, MicOff, Volume2, QrCode, Building } from 'lucide-react';
+import { Globe, TrendingUp, Home, Car, ShoppingBag, Truck, BookOpen, MessageSquare, ExternalLink, Settings, Languages, User, PlusCircle, Search, X, ChevronRight, ChevronDown, SlidersHorizontal, Tag, MapPin, Share2, Briefcase, Flag, ShieldAlert, Sun, Moon, Bell, BellRing, History, Clock, Trash2, Bookmark, Zap, Mic, MicOff, Volume2, QrCode, Building, Compass, HelpCircle } from 'lucide-react';
 import { initialCarListings, initialRealEstateListings, initialTaxiOrders, initialJobListings } from '../data/mockData';
 import { useReports } from '../context/ReportContext';
 import { useBookmarks } from '../context/BookmarkContext';
@@ -24,6 +24,7 @@ interface NavbarProps {
   onOpenNotifications?: () => void;
   onOpenIntegrations?: () => void;
   onOpenAppModeModal?: () => void;
+  onOpenTour?: () => void;
   unreadNotificationsCount?: number;
   searchQuery?: string;
   setSearchQuery?: (query: string) => void;
@@ -41,6 +42,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenNotifications,
   onOpenIntegrations,
   onOpenAppModeModal,
+  onOpenTour,
   unreadNotificationsCount = 0,
   searchQuery = '',
   setSearchQuery,
@@ -1200,6 +1202,18 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <PlusCircle className="w-4 h-4" />
               <span className="hidden sm:inline">{language === 'ar' ? 'إنشاء إعلان' : 'Post Ad'}</span>
+            </button>
+          )}
+
+          {/* Interactive Tour Guide Button */}
+          {onOpenTour && (
+            <button
+              onClick={onOpenTour}
+              title={language === 'ar' ? 'دليل استخدام التطبيق (الجولة التعارفية)' : 'App Interactive Tour Guide'}
+              className="p-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 rounded-lg transition-all active:scale-95 cursor-pointer flex items-center gap-1 text-xs font-bold shrink-0"
+            >
+              <Compass className="w-4 h-4 text-amber-400" />
+              <span className="hidden xl:inline">{language === 'ar' ? 'دليل التطبيق' : 'Tour'}</span>
             </button>
           )}
 
