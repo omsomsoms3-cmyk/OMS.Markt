@@ -7,7 +7,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { ShareAppModal } from './ShareAppModal';
 import { ReportModal } from './ReportModal';
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
-import { shareListingItem } from '../lib/share';
+import { shareListingItem, shareToWhatsApp, shareToTelegram } from '../lib/share';
 import { useBookmarks } from '../context/BookmarkContext';
 import { INTERNATIONAL_COUNTRIES } from '../lib/locations';
 import { ListingFilterChips, PricePresetOption } from './ListingFilterChips';
@@ -529,16 +529,6 @@ export const JobsSection: React.FC<JobsSectionProps> = ({ searchQuery = '' }) =>
                       )}
                     </button>
 
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleShareJobNative(job);
-                      }}
-                      title={language === 'ar' ? 'مشاركة الوظيفة عبر التطبيقات (Web Share)' : 'Native Share'}
-                      className="p-2 bg-slate-100 hover:bg-cyan-500 hover:text-slate-950 dark:bg-slate-950/80 text-cyan-600 dark:text-cyan-400 border border-slate-200 dark:border-slate-700/80 rounded-xl transition-all active:scale-90 shadow-md cursor-pointer flex items-center justify-center"
-                    >
-                      <Share2 className="w-4 h-4" />
-                    </button>
                   </div>
                 </div>
 
@@ -645,19 +635,11 @@ export const JobsSection: React.FC<JobsSectionProps> = ({ searchQuery = '' }) =>
                   </button>
 
                   <button
-                    onClick={() => handleShareJobNative(job)}
-                    title={language === 'ar' ? 'مشاركة الوظيفة عبر التطبيقات (Web Share)' : 'Native Share'}
-                    className="p-2 bg-cyan-500/20 hover:bg-cyan-500 hover:text-slate-950 text-cyan-400 border border-cyan-500/40 rounded-xl transition-all active:scale-95 flex items-center gap-1 cursor-pointer"
-                  >
-                    <Share2 className="w-4 h-4" />
-                  </button>
-
-                  <button
                     onClick={() => setShareJob(job)}
-                    title={language === 'ar' ? 'رمز QR وبطاقة المشاركة' : 'QR Code & Card'}
-                    className="p-2 bg-amber-500/20 hover:bg-amber-500 hover:text-slate-950 text-amber-400 border border-amber-500/40 rounded-xl transition-all active:scale-95 flex items-center gap-1 cursor-pointer"
+                    title={language === 'ar' ? 'مشاركة الفرصة (واتساب، تليجرام، رابط)' : 'Share Job'}
+                    className="p-2 bg-amber-500/20 hover:bg-amber-500 hover:text-slate-950 text-amber-400 border border-amber-500/40 rounded-xl transition-all active:scale-95 flex items-center justify-center cursor-pointer"
                   >
-                    <QrCode className="w-4 h-4" />
+                    <Share2 className="w-4 h-4 shrink-0" />
                   </button>
 
                   <button

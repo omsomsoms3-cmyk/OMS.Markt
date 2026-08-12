@@ -11,9 +11,10 @@ interface SettingsModalProps {
   onOpenAutoCleanup?: () => void;
   onOpenIntegrations?: () => void;
   onOpenTour?: () => void;
+  onOpenInstallGuide?: () => void;
 }
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onOpenAutoCleanup, onOpenIntegrations, onOpenTour }) => {
+export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onOpenAutoCleanup, onOpenIntegrations, onOpenTour, onOpenInstallGuide }) => {
   const { language, setLanguage, t } = useLanguage();
   const { theme, setThemeMode, isDark } = useTheme();
   const { permissions, grantPermission, revokePermission } = usePermissions();
@@ -363,6 +364,35 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span>تشغيل الحذف 🧹</span>
+            </button>
+          </div>
+        )}
+
+        {/* Install PWA App Guide Section */}
+        {onOpenInstallGuide && (
+          <div className="bg-gradient-to-r from-emerald-950/80 via-slate-900 to-teal-950/80 border border-emerald-500/40 p-3.5 rounded-xl flex items-center justify-between gap-3 shadow-md">
+            <div className="space-y-0.5 text-right">
+              <div className="flex items-center gap-2 text-xs font-black text-emerald-300">
+                <Download className="w-4 h-4 text-emerald-400" />
+                <span>{language === 'ar' ? 'تثبيت التطبيق على هاتفك 📲' : 'Install App on Phone 📲'}</span>
+              </div>
+              <p className="text-[10px] text-slate-300">
+                {language === 'ar'
+                  ? 'إضافة للشاشة الرئيسية (Add to Home Screen) بدون متجر'
+                  : 'Add to Home Screen directly from Chrome / Safari'}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onOpenInstallGuide();
+              }}
+              className="px-3.5 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs transition-all shadow-md shrink-0 flex items-center gap-1 cursor-pointer active:scale-95"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>{language === 'ar' ? 'التعليمات 📲' : 'Guide 📲'}</span>
             </button>
           </div>
         )}

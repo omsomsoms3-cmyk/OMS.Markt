@@ -6,7 +6,7 @@ import { ReportModal } from './ReportModal';
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
 import { ShareAppModal } from './ShareAppModal';
 import { useReports } from '../context/ReportContext';
-import { shareListingItem } from '../lib/share';
+import { shareListingItem, shareToWhatsApp, shareToTelegram } from '../lib/share';
 import { useBookmarks } from '../context/BookmarkContext';
 import { INTERNATIONAL_COUNTRIES } from '../lib/locations';
 import { QuickShareButtons } from './QuickShareButtons';
@@ -358,20 +358,11 @@ export const TaxiDeliverySection: React.FC<TaxiDeliverySectionProps> = ({ search
                       {isBookmarked(ord.id) ? <BookmarkCheck className="w-3.5 h-3.5 text-slate-950" /> : <Bookmark className="w-3.5 h-3.5" />}
                     </button>
                     <button
-                      onClick={() => handleShareTaxiOrder(ord)}
-                      title="مشاركة الطلب مباشرة عبر التطبيقات (Web Share)"
-                      className="p-2 bg-cyan-500/20 hover:bg-cyan-500 hover:text-slate-950 text-cyan-400 border border-cyan-500/40 rounded-xl transition-all active:scale-95 text-xs flex items-center gap-1 cursor-pointer"
+                      onClick={() => setShareOrder(ord)}
+                      title="مشاركة الطلب (واتساب، تليجرام، رابط، QR)"
+                      className="p-2 bg-amber-500/20 hover:bg-amber-500 hover:text-slate-950 text-amber-400 border border-amber-500/40 rounded-xl transition-all active:scale-95 text-xs flex items-center justify-center cursor-pointer"
                     >
                       <Share2 className="w-3.5 h-3.5" />
-                      <span className="text-[11px] font-bold">مشاركة</span>
-                    </button>
-                    <button
-                      onClick={() => setShareOrder(ord)}
-                      title="رمز QR ومشاركة الطلب"
-                      className="p-2 bg-amber-500/20 hover:bg-amber-500 hover:text-slate-950 text-amber-400 border border-amber-500/40 rounded-xl transition-all active:scale-95 text-xs flex items-center gap-1 cursor-pointer"
-                    >
-                      <QrCode className="w-3.5 h-3.5" />
-                      <span className="text-[11px] font-bold">رمز QR</span>
                     </button>
                     <button
                       onClick={() => setReportOrder(ord)}

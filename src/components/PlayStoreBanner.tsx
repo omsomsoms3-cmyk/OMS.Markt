@@ -2,7 +2,11 @@ import React, { useState } from 'react';
 import { Smartphone, Download, CheckCircle2, Shield, Star, ExternalLink, Sparkles, X, Layers, Activity } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
-export const PlayStoreBanner: React.FC = () => {
+interface PlayStoreBannerProps {
+  onOpenInstallGuide?: () => void;
+}
+
+export const PlayStoreBanner: React.FC<PlayStoreBannerProps> = ({ onOpenInstallGuide }) => {
   const { language } = useLanguage();
   const [isOpenModal, setIsOpenModal] = useState<boolean>(false);
   const [dismissed, setDismissed] = useState<boolean>(false);
@@ -19,23 +23,34 @@ export const PlayStoreBanner: React.FC = () => {
               <Smartphone className="w-4 h-4" />
             </span>
             <span className="font-bold text-emerald-300">
-              {language === 'ar' ? 'جاهز للنشر على Google Play Store:' : 'Google Play Store Ready:'}
+              {language === 'ar' ? 'تثبيت التطبيق على الهواتف:' : 'Install App on Mobile:'}
             </span>
             <span className="text-slate-300 hidden md:inline">
               {language === 'ar'
-                ? 'التطبيق مكتمل 100% ويستوفي معايير جوجل بلاي وأمان الحسابات وتجاوب الشاشات.'
-                : '100% complete app meeting Google Play Store security and UI standards.'}
+                ? 'تثبيت مباشر على الشاشة الرئيسية (Add to Home Screen) ليعمل كتطبيق أصلي 📲'
+                : 'Direct installation to Home Screen for native app experience 📲'}
             </span>
           </div>
 
           <div className="flex items-center gap-2">
+            {onOpenInstallGuide && (
+              <button
+                onClick={onOpenInstallGuide}
+                className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-3 py-1 rounded-lg text-xs flex items-center gap-1.5 transition-all shadow-md cursor-pointer animate-pulse"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>{language === 'ar' ? 'تعليمات التثبيت الفوري 📲' : 'Install Guide 📲'}</span>
+              </button>
+            )}
+
             <button
               onClick={() => setIsOpenModal(true)}
-              className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-3 py-1 rounded-lg text-xs flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1 rounded-lg text-xs flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
             >
-              <Download className="w-3.5 h-3.5" />
-              <span>{language === 'ar' ? 'تفاصيل النشر والتنزيل' : 'App Status & Build'}</span>
+              <Smartphone className="w-3.5 h-3.5" />
+              <span>{language === 'ar' ? 'معلومات Google Play' : 'Google Play Status'}</span>
             </button>
+
             <button
               onClick={() => setDismissed(true)}
               className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"

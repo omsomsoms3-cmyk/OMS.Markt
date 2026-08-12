@@ -28,7 +28,7 @@ export const CreateAdModal: React.FC<CreateAdModalProps> = ({
 
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<'tools' | 'appliances' | 'electronics' | 'car' | 'realestate' | 'service'>('tools');
-  const [condition, setCondition] = useState<'new' | 'used'>('used');
+  const [condition, setCondition] = useState<'new' | 'used' | 'certified'>('used');
   const [type, setType] = useState<'sale' | 'rent'>('sale');
   const [priceUSD, setPriceUSD] = useState<string>('150');
   const [priceSYP, setPriceSYP] = useState<string>('2250000');
@@ -452,11 +452,11 @@ export const CreateAdModal: React.FC<CreateAdModalProps> = ({
                 <label className="block font-bold text-slate-200">
                   {language === 'ar' ? 'حالة المنتج' : 'Item Condition'}
                 </label>
-                <div className="grid grid-cols-2 gap-1.5 bg-slate-950 p-1 border border-slate-800 rounded-xl">
+                <div className="grid grid-cols-3 gap-1 bg-slate-950 p-1 border border-slate-800 rounded-xl">
                   <button
                     type="button"
                     onClick={() => setCondition('used')}
-                    className={`py-1.5 rounded-lg font-bold text-[11px] transition-all ${
+                    className={`py-1.5 rounded-lg font-bold text-[10px] sm:text-[11px] transition-all ${
                       condition === 'used' ? 'bg-amber-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
                     }`}
                   >
@@ -464,8 +464,17 @@ export const CreateAdModal: React.FC<CreateAdModalProps> = ({
                   </button>
                   <button
                     type="button"
+                    onClick={() => setCondition('certified')}
+                    className={`py-1.5 rounded-lg font-bold text-[10px] sm:text-[11px] transition-all ${
+                      condition === 'certified' ? 'bg-cyan-600 text-white shadow ring-1 ring-cyan-400/50' : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    {language === 'ar' ? 'مفحوصة 🛡️' : 'Certified'}
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => setCondition('new')}
-                    className={`py-1.5 rounded-lg font-bold text-[11px] transition-all ${
+                    className={`py-1.5 rounded-lg font-bold text-[10px] sm:text-[11px] transition-all ${
                       condition === 'new' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
                     }`}
                   >

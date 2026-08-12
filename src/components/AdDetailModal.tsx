@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { X, Phone, MessageSquare, Share2, QrCode, Bookmark, BookmarkCheck, Tag, Star, ArrowUpDown, CreditCard, MapPin, Calendar, Building2, ShieldAlert, CheckCircle2, ChevronRight, ChevronLeft, ChevronDown, Eye, Clock, User, Sparkles, ShoppingBag } from 'lucide-react';
+import { X, Phone, MessageSquare, Share2, QrCode, Bookmark, BookmarkCheck, Tag, Star, ArrowUpDown, CreditCard, MapPin, Calendar, Building2, ShieldAlert, CheckCircle2, ChevronRight, ChevronLeft, ChevronDown, Eye, Clock, User, Sparkles, ShoppingBag, ZoomIn } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useBookmarks } from '../context/BookmarkContext';
 import { LazyImage } from './LazyImage';
-import { shareListingItem } from '../lib/share';
+import { shareListingItem, shareToWhatsApp, shareToTelegram } from '../lib/share';
+import { ImageLightboxModal } from './ImageLightboxModal';
 
 interface AdDetailModalProps {
   isOpen: boolean;
@@ -36,6 +37,7 @@ export const AdDetailModal: React.FC<AdDetailModalProps> = ({
   const { isBookmarked, addBookmark, removeBookmark } = useBookmarks();
   const [currentImageIdx, setCurrentImageIdx] = useState(0);
   const [showMoreOptions, setShowMoreOptions] = useState(false);
+  const [showLightbox, setShowLightbox] = useState(false);
 
   if (!isOpen || !item) return null;
 
@@ -127,8 +129,19 @@ export const AdDetailModal: React.FC<AdDetailModalProps> = ({
                   </>
                 )}
 
-                {/* Heart Bookmark & Web Share Button Overlay */}
+                {/* Heart Bookmark, Share & Zoom Lightbox Overlay */}
                 <div className="absolute top-3 left-3 z-10 flex items-center gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowLightbox(true);
+                    }}
+                    className="p-2.5 rounded-2xl border backdrop-blur-md transition-all active:scale-90 shadow-xl cursor-pointer bg-slate-950/85 text-amber-400 border-amber-500/40 hover:bg-amber-400 hover:text-slate-950"
+                    title="تكبير ومعاينة الصورة بحجم كامل"
+                  >
+                    <ZoomIn className="w-5 h-5" />
+                  </button>
+
                   <button
                     onClick={handleToggleBookmark}
                     className={`p-2.5 rounded-2xl border backdrop-blur-md transition-all active:scale-90 shadow-xl cursor-pointer ${
@@ -358,18 +371,26 @@ export const AdDetailModal: React.FC<AdDetailModalProps> = ({
                     )}
 
                     <button
-                      onClick={async () => {
-                        const shareTitle = item.title || `${item.fromCity} ➔ ${item.toArea}`;
-                        const shareText = item.description || `إعلان مميز على منصة OMS: ${shareTitle}`;
-                        const res = await shareListingItem({ title: shareTitle, text: shareText, url: window.location.href });
-                        if (res.success && res.method === 'clipboard') {
-                          alert(language === 'ar' ? 'تم نسخ معلومات ورابط الإعلان إلى الحافظة 📋' : 'Listing copied to clipboard!');
+                      onClick={() => {
+                        if (onOpenShare) {
+                          onOpenShare(item);
+                        } else {
+                          const shareTitle = item.title || `${item.fromCity} ➔ ${item.toArea}`;
+                          const shareText = item.description
+                            ? `${item.description}\nالسعر: $${(item.priceUSD || item.salaryUSD || 0).toLocaleString()} (${(item.priceSYP || item.salarySYP || 0).toLocaleString()} ل.س)`
+                            : `إعلان مميز على منصة OMS: ${shareTitle}`;
+                          shareListingItem({
+                            title: shareTitle,
+                            text: shareText,
+                            url: window.location.href,
+                          });
                         }
                       }}
-                      className="min-h-[42px] flex items-center justify-center gap-1.5 py-2 px-3 bg-cyan-500/15 hover:bg-cyan-500 hover:text-slate-950 text-cyan-600 dark:text-cyan-400 border border-cyan-500/40 rounded-xl font-bold transition-all cursor-pointer"
+                      className="min-h-[42px] flex items-center justify-center gap-1.5 py-2 px-3.5 bg-amber-500/20 hover:bg-amber-500 hover:text-slate-950 text-amber-600 dark:text-amber-400 border border-amber-500/40 rounded-xl font-bold transition-all cursor-pointer shadow-sm active:scale-95"
+                      title={language === 'ar' ? 'مشاركة الإعلان مع كافة الخيارات (واتساب، تليجرام، رابط)' : 'Share Listing'}
                     >
-                      <Share2 className="w-4 h-4" />
-                      <span>مشاركة 📲</span>
+                      <Share2 className="w-4 h-4 shrink-0" />
+                      <span>{language === 'ar' ? 'مشاركة الإعلان 🔗' : 'Share Ad'}</span>
                     </button>
 
                     {onOpenShare && (
@@ -423,6 +444,23 @@ export const AdDetailModal: React.FC<AdDetailModalProps> = ({
           )}
         </div>
       </div>
+
+      {/* Image Lightbox Modal */}
+      <ImageLightboxModal
+        isOpen={showLightbox}
+        onClose={() => setShowLightbox(false)}
+        imageUrl={images[currentImageIdx] || ''}
+        title={item.title || ''}
+        priceUSD={item.priceUSD || item.salaryUSD}
+        priceSYP={item.priceSYP || item.salarySYP}
+        city={item.city || item.fromCity}
+        phone={item.phone}
+        images={images}
+        onReserve={onOpenPayment ? () => {
+          setShowLightbox(false);
+          onOpenPayment(item);
+        } : undefined}
+      />
     </div>
   );
 };

@@ -85,8 +85,8 @@ export function subscribeToActivityLogs(
         }
       },
       (error) => {
-        console.error('Activity logs subscription error:', error);
-        // Fallback to local storage if Firestore error
+        console.warn('Activity logs subscription fallback active:', error);
+        // Fallback to local storage if Firestore error or restricted permissions
         try {
           const stored = localStorage.getItem(LOCAL_LOGS_KEY);
           if (stored) {

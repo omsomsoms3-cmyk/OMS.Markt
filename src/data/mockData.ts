@@ -186,6 +186,24 @@ export const initialCarListings: CarListing[] = [
     featuredPlan: 'vip'
   },
   {
+    id: 'car-certified-1',
+    title: '🇸🇦 تويوتا كامري 2022 مفحوصة ومعتمدة (ضمان وكالة الشامل)',
+    category: 'car',
+    condition: 'certified',
+    make: 'Toyota',
+    model: 'Camry GLE',
+    year: 2022,
+    priceUSD: 24500,
+    priceSYP: 367500000,
+    type: 'sale',
+    mileage: 38000,
+    city: 'السعودية - جدة',
+    image: 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?auto=format&fit=crop&w=800&q=80',
+    phone: '+966501122334',
+    featured: true,
+    featuredPlan: 'golden'
+  },
+  {
     id: 'item-video-1',
     title: 'فيديو معاينة: دريلة ومعدات Bosch الاحترافية بالفيديو 🎥',
     category: 'tools',
@@ -212,6 +230,23 @@ export const initialCarListings: CarListing[] = [
     city: 'السعودية - الرياض',
     image: 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=800&q=80',
     phone: '+966554433221',
+    featured: true
+  },
+  {
+    id: 'car-certified-2',
+    title: 'هونداي توسان 2021 مفحوصة كارت وكالة خالية من الحوادث',
+    category: 'car',
+    condition: 'certified',
+    make: 'Hyundai',
+    model: 'Tucson',
+    year: 2021,
+    priceUSD: 19800,
+    priceSYP: 297000000,
+    type: 'sale',
+    mileage: 45000,
+    city: 'سوريا - دمشق',
+    image: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80',
+    phone: '+963944998877',
     featured: true
   },
   {

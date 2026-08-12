@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { CarListing } from '../types';
+import { CarListing, TabType } from '../types';
 import { initialCarListings } from '../data/mockData';
 import { subscribeToListings } from '../lib/listingsService';
-import { ShoppingBag, Plus, Phone, MapPin, Calendar, Tag, Wrench, Car as CarIcon, Laptop, Home, CreditCard, ShieldCheck, Filter, ArrowUpDown, RefreshCw, X, Share2, Flag, Crown, Star, Trash2, Bookmark, BookmarkCheck, Globe, QrCode, ChevronDown, ChevronUp, MoreHorizontal } from 'lucide-react';
+import { ShoppingBag, Plus, Phone, MapPin, Calendar, Tag, Wrench, Car as CarIcon, Laptop, Home, CreditCard, ShieldCheck, Filter, ArrowUpDown, RefreshCw, X, Share2, Flag, Crown, Star, Trash2, Bookmark, BookmarkCheck, Globe, QrCode, ChevronDown, ChevronUp, MoreHorizontal, ZoomIn, Maximize2, Sparkles, Building, Briefcase, Truck } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAppMode } from '../context/AppModeContext';
 import { PaymentModal, PaymentItemDetails } from './PaymentModal';
@@ -13,11 +13,15 @@ import { MakeOfferModal } from './MakeOfferModal';
 import { CompareModal } from './CompareModal';
 import { RatingModal } from './RatingModal';
 import { AdDetailModal } from './AdDetailModal';
+import { ImageLightboxModal } from './ImageLightboxModal';
 import { getItemAverageRating } from '../lib/ratings';
-import { shareListingItem } from '../lib/share';
+import { shareListingItem, shareToWhatsApp, shareToTelegram } from '../lib/share';
 import { useBookmarks } from '../context/BookmarkContext';
 import { INTERNATIONAL_COUNTRIES } from '../lib/locations';
-import { ListingFilterChips, PricePresetOption } from './ListingFilterChips';
+import { PricePresetOption, ListingFilterChips } from './ListingFilterChips';
+import { PriceRangeSlider } from './PriceRangeSlider';
+import { SmartLocationFilter } from './SmartLocationFilter';
+import { SmartCarSpecsFilter } from './SmartCarSpecsFilter';
 import { useReports } from '../context/ReportContext';
 import { QuickShareButtons } from './QuickShareButtons';
 import { PostDateBadge } from './PostDateBadge';
@@ -28,9 +32,10 @@ import { InfiniteScrollLoader } from './InfiniteScrollLoader';
 
 interface CarsSectionProps {
   searchQuery?: string;
+  onSelectTab?: (tab: TabType) => void;
 }
 
-export const CarsSection: React.FC<CarsSectionProps> = ({ searchQuery = '' }) => {
+export const CarsSection: React.FC<CarsSectionProps> = ({ searchQuery = '', onSelectTab }) => {
   const { language } = useLanguage();
   const { appMode } = useAppMode();
   const { isPostDeleted } = useReports();
@@ -50,11 +55,18 @@ export const CarsSection: React.FC<CarsSectionProps> = ({ searchQuery = '' }) =>
   // Sorting & Advanced Filter State
   const [sortOption, setSortOption] = useState<'default' | 'price_asc' | 'price_desc' | 'newest' | 'oldest'>('default');
   const [filterCity, setFilterCity] = useState<string>('all');
+  const [filterArea, setFilterArea] = useState<string>('');
   const [minPrice, setMinPrice] = useState<string>('');
   const [maxPrice, setMaxPrice] = useState<string>('');
   const [selectedPricePreset, setSelectedPricePreset] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
   const [showFilters, setShowFilters] = useState<boolean>(false);
+
+  // Smart Specs Filter State
+  const [selectedMake, setSelectedMake] = useState<string>('all');
+  const [selectedYearRange, setSelectedYearRange] = useState<string>('all');
+  const [selectedTransmission, setSelectedTransmission] = useState<string>('all');
+  const [selectedFuelType, setSelectedFuelType] = useState<string>('all');
 
   const carPricePresets: PricePresetOption[] = [
     { id: 'all', labelAr: 'الكل 💵', labelEn: 'All Prices' },
@@ -70,6 +82,13 @@ export const CarsSection: React.FC<CarsSectionProps> = ({ searchQuery = '' }) =>
     setMaxPrice(max !== undefined ? max.toString() : '');
   };
 
+  const handleResetSpecs = () => {
+    setSelectedMake('all');
+    setSelectedYearRange('all');
+    setSelectedTransmission('all');
+    setSelectedFuelType('all');
+  };
+
   const [selectedPaymentItem, setSelectedPaymentItem] = useState<PaymentItemDetails | null>(null);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [shareItem, setShareItem] = useState<CarListing | null>(null);
@@ -77,6 +96,7 @@ export const CarsSection: React.FC<CarsSectionProps> = ({ searchQuery = '' }) =>
   const [deleteItem, setDeleteItem] = useState<CarListing | null>(null);
   const [offerItem, setOfferItem] = useState<CarListing | null>(null);
   const [detailItem, setDetailItem] = useState<CarListing | null>(null);
+  const [lightboxItem, setLightboxItem] = useState<CarListing | null>(null);
   const [comparedItems, setComparedItems] = useState<CarListing[]>([]);
   const [isCompareOpen, setIsCompareOpen] = useState(false);
   const [rateItem, setRateItem] = useState<CarListing | null>(null);
@@ -148,19 +168,29 @@ export const CarsSection: React.FC<CarsSectionProps> = ({ searchQuery = '' }) =>
     setFilterCondition('all');
     setFilterCategory('all');
     setFilterCity('all');
+    setFilterArea('');
     setMinPrice('');
     setMaxPrice('');
     setSelectedPricePreset('all');
     setDateFilter('all');
     setSortOption('default');
+    setSelectedMake('all');
+    setSelectedYearRange('all');
+    setSelectedTransmission('all');
+    setSelectedFuelType('all');
   };
 
   const activeFiltersCount =
     (filterCondition !== 'all' ? 1 : 0) +
     (filterCategory !== 'all' ? 1 : 0) +
     (filterCity !== 'all' ? 1 : 0) +
+    (filterArea ? 1 : 0) +
     (selectedPricePreset !== 'all' || minPrice || maxPrice ? 1 : 0) +
-    (dateFilter !== 'all' ? 1 : 0);
+    (dateFilter !== 'all' ? 1 : 0) +
+    (selectedMake !== 'all' ? 1 : 0) +
+    (selectedYearRange !== 'all' ? 1 : 0) +
+    (selectedTransmission !== 'all' ? 1 : 0) +
+    (selectedFuelType !== 'all' ? 1 : 0);
 
   const filteredItems = items
     .filter((item) => {
@@ -170,6 +200,25 @@ export const CarsSection: React.FC<CarsSectionProps> = ({ searchQuery = '' }) =>
       const matchesCity = filterCity === 'all' || 
         item.city.toLowerCase().includes(filterCity.toLowerCase()) || 
         filterCity.toLowerCase().includes(item.city.toLowerCase());
+
+      const matchesArea = !filterArea || item.city.includes(filterArea) || item.title.includes(filterArea);
+
+      // Make matching
+      let matchesMake = true;
+      if (selectedMake !== 'all') {
+        const itemText = `${item.title} ${item.make || ''} ${item.model || ''}`.toLowerCase();
+        matchesMake = itemText.includes(selectedMake.toLowerCase());
+      }
+
+      // Year range matching
+      let matchesYear = true;
+      if (selectedYearRange !== 'all' && item.year) {
+        if (selectedYearRange === '2024_2026') matchesYear = item.year >= 2024;
+        else if (selectedYearRange === '2020_2023') matchesYear = item.year >= 2020 && item.year <= 2023;
+        else if (selectedYearRange === '2015_2019') matchesYear = item.year >= 2015 && item.year <= 2019;
+        else if (selectedYearRange === '2010_2014') matchesYear = item.year >= 2010 && item.year <= 2014;
+        else if (selectedYearRange === 'under_2010') matchesYear = item.year < 2010;
+      }
 
       const minP = minPrice ? parseFloat(minPrice) : 0;
       const maxP = maxPrice ? parseFloat(maxPrice) : Infinity;
@@ -196,7 +245,7 @@ export const CarsSection: React.FC<CarsSectionProps> = ({ searchQuery = '' }) =>
         (item.model && item.model.toLowerCase().includes(query)) ||
         (item.phone && item.phone.includes(query));
 
-      return matchesCondition && matchesCategory && matchesCity && matchesPrice && matchesDate && matchesSearch;
+      return matchesCondition && matchesCategory && matchesCity && matchesArea && matchesMake && matchesYear && matchesPrice && matchesDate && matchesSearch;
     })
     .sort((a, b) => {
       if (sortOption === 'newest') {
@@ -233,261 +282,229 @@ export const CarsSection: React.FC<CarsSectionProps> = ({ searchQuery = '' }) =>
   } = useInfiniteScroll<CarListing>(filteredItems, {
     initialCount: 12,
     step: 12,
-    dependencies: [filterCondition, filterCategory, filterCity, minPrice, maxPrice, dateFilter, sortOption, searchQuery],
+    dependencies: [filterCondition, filterCategory, filterCity, filterArea, minPrice, maxPrice, dateFilter, sortOption, searchQuery, selectedMake, selectedYearRange, selectedTransmission, selectedFuelType],
   });
 
   return (
     <div className="p-4 max-w-7xl w-full mx-auto space-y-6">
-      {/* Banner */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-wrap items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl">
-              <ShoppingBag className="w-5 h-5" />
-            </div>
-            <h2 className="text-xl font-black text-white">
-              {language === 'ar' ? 'سوق بيع وشراء الأدوات مستعمل وجديد' : 'New & Used Goods & Vehicles Market'}
-            </h2>
-            <span className="text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-bold">
-              {language === 'ar' ? 'الصفحة الرئيسية ⭐️' : 'Home Main'}
-            </span>
-          </div>
-          <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-            {language === 'ar'
-              ? 'المنصة الأولى للبيع والشراء المباشر في سوريا: أدوات ومعدات كهربائية، قطع غيار، إلكترونيات، وسيارات مع نظام تقييمات الشراء المعتمد.'
-              : 'Buy and sell new & used items, electrical tools, equipment, electronics, and cars with verified ratings.'}
-          </p>
-
-          {/* Quick Rating Button */}
-          <button
-            onClick={() => {
-              setRateItem(null);
-              setIsRatingOpen(true);
-            }}
-            className="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500 hover:text-slate-950 text-amber-300 border border-amber-500/40 rounded-xl font-bold text-xs transition-all shadow cursor-pointer flex items-center gap-1.5"
-          >
-            <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-            <span>{language === 'ar' ? 'سجل تقييمات الأدوات والقطع ⭐️' : 'All Tool & Item Ratings ⭐️'}</span>
-          </button>
-        </div>
-
-        {/* Filters */}
-        <div className="flex flex-wrap items-center gap-2 bg-slate-950 p-2 border border-slate-800 rounded-xl">
-          <span className="text-xs text-slate-400 font-bold px-1">
-            {language === 'ar' ? 'الحالة:' : 'Condition:'}
-          </span>
-          <button
-            onClick={() => setFilterCondition('all')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-              filterCondition === 'all' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            {language === 'ar' ? 'الكل' : 'All'}
-          </button>
-          <button
-            onClick={() => setFilterCondition('used')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-              filterCondition === 'used' ? 'bg-amber-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            {language === 'ar' ? 'مستعمل ♻️' : 'Used ♻️'}
-          </button>
-          <button
-            onClick={() => setFilterCondition('new')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-              filterCondition === 'new' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            {language === 'ar' ? 'جديد ✨' : 'New ✨'}
-          </button>
-        </div>
-      </div>
-
-      {/* Category Selection Bar & Advanced Filter Toolbar */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-slate-900 border border-slate-800 p-3 rounded-2xl shadow-md">
-        {/* Category Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
-          <button
-            onClick={() => setFilterCategory('all')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap ${
-              filterCategory === 'all'
-                ? 'bg-amber-500 text-slate-950 font-black shadow'
-                : 'bg-slate-950/80 text-slate-300 hover:bg-slate-800 border border-slate-800'
-            }`}
-          >
-            <ShoppingBag className="w-3.5 h-3.5" />
-            <span>{language === 'ar' ? 'الكل' : 'All'}</span>
-          </button>
-
-          <button
-            onClick={() => setFilterCategory('tools')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap ${
-              filterCategory === 'tools'
-                ? 'bg-amber-500 text-slate-950 font-black shadow'
-                : 'bg-slate-950/80 text-slate-300 hover:bg-slate-800 border border-slate-800'
-            }`}
-          >
-            <Wrench className="w-3.5 h-3.5" />
-            <span>{language === 'ar' ? 'أدوات صيانة' : 'Tools'}</span>
-          </button>
-
-          <button
-            onClick={() => setFilterCategory('appliances')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap ${
-              filterCategory === 'appliances'
-                ? 'bg-amber-500 text-slate-950 font-black shadow'
-                : 'bg-slate-950/80 text-slate-300 hover:bg-slate-800 border border-slate-800'
-            }`}
-          >
-            <Home className="w-3.5 h-3.5" />
-            <span>{language === 'ar' ? 'أجهزة منزلية' : 'Appliances'}</span>
-          </button>
-
-          <button
-            onClick={() => setFilterCategory('electronics')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap ${
-              filterCategory === 'electronics'
-                ? 'bg-amber-500 text-slate-950 font-black shadow'
-                : 'bg-slate-950/80 text-slate-300 hover:bg-slate-800 border border-slate-800'
-            }`}
-          >
-            <Laptop className="w-3.5 h-3.5" />
-            <span>{language === 'ar' ? 'إلكترونيات' : 'Electronics'}</span>
-          </button>
-
-          <button
-            onClick={() => setFilterCategory('car')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap ${
-              filterCategory === 'car'
-                ? 'bg-amber-500 text-slate-950 font-black shadow'
-                : 'bg-slate-950/80 text-slate-300 hover:bg-slate-800 border border-slate-800'
-            }`}
-          >
-            <CarIcon className="w-3.5 h-3.5" />
-            <span>{language === 'ar' ? 'سيارات' : 'Cars'}</span>
-          </button>
-        </div>
-
-        {/* Sorting & Filter Drawer Toggle */}
-        <div className="flex items-center gap-2 shrink-0">
-          {/* Sort Dropdown */}
-          <div className="flex items-center gap-1 bg-slate-950 border border-slate-800 rounded-xl px-2 py-1 text-xs">
-            <ArrowUpDown className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            <select
-              value={sortOption}
-              onChange={(e) => setSortOption(e.target.value as any)}
-              className="bg-transparent text-slate-200 font-bold focus:outline-none cursor-pointer text-xs"
-            >
-              <option value="default" className="bg-slate-900">{language === 'ar' ? 'ترتيب افتراضي' : 'Default Sorting'}</option>
-              <option value="price_asc" className="bg-slate-900">{language === 'ar' ? 'السعر: من الأقل للأعلى 💵' : 'Price: Low to High'}</option>
-              <option value="price_desc" className="bg-slate-900">{language === 'ar' ? 'السعر: من الأعلى للأقل 💎' : 'Price: High to Low'}</option>
-              <option value="newest" className="bg-slate-900">{language === 'ar' ? 'التاريخ: الأحدث أولاً 📅' : 'Date: Newest First'}</option>
-              <option value="oldest" className="bg-slate-900">{language === 'ar' ? 'التاريخ: الأقدم أولاً ⌛' : 'Date: Oldest First'}</option>
-            </select>
-          </div>
-
-          {/* Toggle Filter Sidebar Button */}
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
-              showFilters || activeFiltersCount > 0
-                ? 'bg-indigo-600 text-white shadow'
-                : 'bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800'
-            }`}
-          >
-            <Filter className="w-3.5 h-3.5 text-indigo-300" />
-            <span>{language === 'ar' ? 'فلترة متقدمة' : 'Filters'}</span>
-            {activeFiltersCount > 0 && (
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Filter Chips Bar (Price range, Location, Date recency) */}
-      <ListingFilterChips
-        selectedCity={filterCity}
-        onSelectCity={(city) => setFilterCity(city)}
-        selectedPricePreset={selectedPricePreset}
-        pricePresets={carPricePresets}
-        onSelectPricePreset={handleSelectPricePreset}
-        selectedDateFilter={dateFilter}
-        onSelectDateFilter={(d) => setDateFilter(d)}
-        onResetAll={resetFilters}
-        activeFiltersCount={activeFiltersCount}
-      />
-
-      {/* Filter Options Expandable Panel */}
-      {showFilters && (
-        <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-3 animate-fadeIn shadow-inner">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-800 text-xs font-bold text-slate-300">
-            <span className="flex items-center gap-1.5 text-amber-400">
-              <Filter className="w-4 h-4" />
-              <span>{language === 'ar' ? 'تخصيص نطاق البحث والفلترة' : 'Advanced Search & Filter Panel'}</span>
-            </span>
+      {/* Unified Compact Control Panel */}
+      <div className="bg-slate-900 border border-slate-800 p-2.5 sm:p-3.5 rounded-2xl shadow-xl space-y-2.5">
+        {/* Top Bar: Categories + Conditions + Sort & Actions */}
+        <div className="flex flex-wrap items-center justify-between gap-2.5">
+          {/* Category Tabs */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none max-w-full shrink-0">
             <button
-              onClick={resetFilters}
-              className="text-slate-400 hover:text-red-400 flex items-center gap-1 transition-colors text-[11px]"
+              onClick={() => setFilterCategory('all')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                filterCategory === 'all'
+                  ? 'bg-amber-500 text-slate-950 font-black shadow'
+                  : 'bg-slate-950/80 text-slate-300 hover:bg-slate-800 border border-slate-800'
+              }`}
             >
-              <RefreshCw className="w-3 h-3" />
-              <span>{language === 'ar' ? 'إعادة ضبط الفلاتر' : 'Reset Filters'}</span>
+              <ShoppingBag className="w-3.5 h-3.5" />
+              <span>{language === 'ar' ? 'الكل' : 'All'}</span>
+            </button>
+
+            <button
+              onClick={() => setFilterCategory('tools')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                filterCategory === 'tools'
+                  ? 'bg-amber-500 text-slate-950 font-black shadow'
+                  : 'bg-slate-950/80 text-slate-300 hover:bg-slate-800 border border-slate-800'
+              }`}
+            >
+              <Wrench className="w-3.5 h-3.5" />
+              <span>{language === 'ar' ? 'أدوات صيانة' : 'Tools'}</span>
+            </button>
+
+            <button
+              onClick={() => setFilterCategory('appliances')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                filterCategory === 'appliances'
+                  ? 'bg-amber-500 text-slate-950 font-black shadow'
+                  : 'bg-slate-950/80 text-slate-300 hover:bg-slate-800 border border-slate-800'
+              }`}
+            >
+              <Home className="w-3.5 h-3.5" />
+              <span>{language === 'ar' ? 'أجهزة منزلية' : 'Appliances'}</span>
+            </button>
+
+            <button
+              onClick={() => setFilterCategory('electronics')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                filterCategory === 'electronics'
+                  ? 'bg-amber-500 text-slate-950 font-black shadow'
+                  : 'bg-slate-950/80 text-slate-300 hover:bg-slate-800 border border-slate-800'
+              }`}
+            >
+              <Laptop className="w-3.5 h-3.5" />
+              <span>{language === 'ar' ? 'إلكترونيات' : 'Electronics'}</span>
+            </button>
+
+            <button
+              onClick={() => setFilterCategory('car')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                filterCategory === 'car'
+                  ? 'bg-amber-500 text-slate-950 font-black shadow'
+                  : 'bg-slate-950/80 text-slate-300 hover:bg-slate-800 border border-slate-800'
+              }`}
+            >
+              <CarIcon className="w-3.5 h-3.5" />
+              <span>{language === 'ar' ? 'سيارات' : 'Cars'}</span>
             </button>
           </div>
 
-          <div className="grid sm:grid-cols-3 gap-3">
-            {/* Filter by City / Location */}
-            <div className="space-y-1">
-              <label className="block text-[11px] font-bold text-slate-400 flex items-center gap-1">
-                <Globe className="w-3 h-3 text-emerald-400" />
-                <span>{language === 'ar' ? 'الدولة والمدينة 🌍' : 'Country & City 🌍'}</span>
-              </label>
-              <select
-                value={filterCity}
-                onChange={(e) => setFilterCity(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 font-medium"
+          {/* Right Group: Condition + Sorting + Filters Button + Rating Button */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Condition Pills */}
+            <div className="flex items-center gap-1 bg-slate-950 p-1 border border-slate-800 rounded-xl">
+              <button
+                onClick={() => setFilterCondition('all')}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                  filterCondition === 'all' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-400 hover:text-slate-200'
+                }`}
               >
-                <option value="all">{language === 'ar' ? 'جميع البلدان والمدن 🌍' : 'All Countries & Cities'}</option>
-                {INTERNATIONAL_COUNTRIES.map((c) => (
-                  <optgroup key={c.code} label={`${c.flag} ${language === 'ar' ? c.nameAr : c.nameEn}`}>
-                    <option value={c.nameAr}>{c.flag} كل {c.nameAr}</option>
-                    {c.cities.map((ci) => (
-                      <option key={ci.nameAr} value={ci.nameAr}>
-                        {c.flag} {ci.nameAr}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
+                {language === 'ar' ? 'الكل' : 'All'}
+              </button>
+              <button
+                onClick={() => setFilterCondition('used')}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                  filterCondition === 'used' ? 'bg-amber-600 text-white shadow-xs' : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                {language === 'ar' ? 'مستعمل ♻️' : 'Used ♻️'}
+              </button>
+              <button
+                onClick={() => setFilterCondition('new')}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                  filterCondition === 'new' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                {language === 'ar' ? 'جديد ✨' : 'New ✨'}
+              </button>
+            </div>
+
+            {/* Sort Dropdown */}
+            <div className="flex items-center gap-1 bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs">
+              <ArrowUpDown className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <select
+                value={sortOption}
+                onChange={(e) => setSortOption(e.target.value as any)}
+                className="bg-transparent text-slate-200 font-bold focus:outline-none cursor-pointer text-xs"
+              >
+                <option value="default" className="bg-slate-900">{language === 'ar' ? 'ترتيب افتراضي' : 'Default'}</option>
+                <option value="price_asc" className="bg-slate-900">{language === 'ar' ? 'السعر: الأقل للأعلى 💵' : 'Price: Low to High'}</option>
+                <option value="price_desc" className="bg-slate-900">{language === 'ar' ? 'السعر: الأعلى للأقل 💎' : 'Price: High to Low'}</option>
+                <option value="newest" className="bg-slate-900">{language === 'ar' ? 'التاريخ: الأحدث 📅' : 'Newest'}</option>
+                <option value="oldest" className="bg-slate-900">{language === 'ar' ? 'التاريخ: الأقدم ⌛' : 'Oldest'}</option>
               </select>
             </div>
 
-            {/* Min Price ($ USD) */}
-            <div className="space-y-1">
-              <label className="block text-[11px] font-bold text-slate-400">
-                {language === 'ar' ? 'الحد الأدنى للسعر ($ USD)' : 'Min Price ($)'}
-              </label>
-              <input
-                type="number"
-                placeholder="0"
-                value={minPrice}
-                onChange={(e) => setMinPrice(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 font-mono focus:outline-none focus:border-amber-500"
-              />
-            </div>
+            {/* Advanced Filters Button */}
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                showFilters || activeFiltersCount > 0
+                  ? 'bg-indigo-600 text-white shadow'
+                  : 'bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800'
+              }`}
+            >
+              <Filter className="w-3.5 h-3.5 text-indigo-300" />
+              <span>{language === 'ar' ? 'فلترة متقدمة' : 'Filters'}</span>
+              {activeFiltersCount > 0 && (
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+              )}
+            </button>
 
-            {/* Max Price ($ USD) */}
-            <div className="space-y-1">
-              <label className="block text-[11px] font-bold text-slate-400">
-                {language === 'ar' ? 'الحد الأعلى للسعر ($ USD)' : 'Max Price ($)'}
-              </label>
-              <input
-                type="number"
-                placeholder="10000"
-                value={maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 font-mono focus:outline-none focus:border-amber-500"
-              />
-            </div>
+            {/* Quick Rating Button */}
+            <button
+              onClick={() => {
+                setRateItem(null);
+                setIsRatingOpen(true);
+              }}
+              className="px-2.5 py-1.5 bg-amber-500/20 hover:bg-amber-500 hover:text-slate-950 text-amber-300 border border-amber-500/40 rounded-xl font-bold text-xs transition-all shadow cursor-pointer flex items-center gap-1 shrink-0"
+              title={language === 'ar' ? 'سجل تقييمات الأدوات والقطع' : 'Tool Ratings'}
+            >
+              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+              <span className="hidden sm:inline">{language === 'ar' ? 'سجل التقييمات ⭐️' : 'Ratings ⭐️'}</span>
+            </button>
           </div>
+        </div>
+
+        {/* Bottom Bar: Location & Filter Chips (Seamlessly Integrated) */}
+        <div className="pt-2 border-t border-slate-800/80">
+          <ListingFilterChips
+            selectedCity={filterCity}
+            onSelectCity={(city) => setFilterCity(city)}
+            selectedPricePreset={selectedPricePreset}
+            pricePresets={carPricePresets}
+            onSelectPricePreset={handleSelectPricePreset}
+            selectedDateFilter={dateFilter}
+            onSelectDateFilter={(d) => setDateFilter(d)}
+            onResetAll={resetFilters}
+            activeFiltersCount={activeFiltersCount}
+          />
+        </div>
+      </div>
+
+      {/* Filter Options Expandable Panel */}
+      {showFilters && (
+        <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-4 animate-fadeIn shadow-2xl">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-800 text-xs font-bold text-slate-300">
+            <span className="flex items-center gap-1.5 text-amber-400">
+              <Filter className="w-4 h-4" />
+              <span>{language === 'ar' ? 'تخصيص نطاق البحث والفلترة الذكية' : 'Smart Search & Filter Console'}</span>
+            </span>
+            <button
+              onClick={resetFilters}
+              className="text-slate-400 hover:text-red-400 flex items-center gap-1 transition-colors text-[11px] font-bold cursor-pointer"
+            >
+              <RefreshCw className="w-3 h-3" />
+              <span>{language === 'ar' ? 'إعادة ضبط كل الفلاتر' : 'Reset All Filters'}</span>
+            </button>
+          </div>
+
+          {/* Interactive Price Range Slider */}
+          <PriceRangeSlider
+            minVal={minPrice ? parseFloat(minPrice) : 0}
+            maxVal={maxPrice ? parseFloat(maxPrice) : 50000}
+            minLimit={0}
+            maxLimit={50000}
+            step={100}
+            currencySymbol="$"
+            onChange={(min, max) => {
+              setMinPrice(min > 0 ? min.toString() : '');
+              setMaxPrice(max < 50000 ? max.toString() : '');
+            }}
+            presetRanges={[
+              { labelAr: 'أقل من $500 💵', labelEn: '< $500', min: 0, max: 500 },
+              { labelAr: '$500 - $3,000 🚗', labelEn: '$500 - $3k', min: 500, max: 3000 },
+              { labelAr: '$3,000 - $12,000 🚘', labelEn: '$3k - $12k', min: 3000, max: 12000 },
+              { labelAr: '$12,000 - $30,000 🏎️', labelEn: '$12k - $30k', min: 12000, max: 30000 },
+              { labelAr: 'أكثر من $30,000 💎', labelEn: '> $30k 💎', min: 30000, max: 50000 },
+            ]}
+          />
+
+          {/* Smart Location Filter */}
+          <SmartLocationFilter
+            selectedCity={filterCity}
+            onSelectCity={(city) => setFilterCity(city)}
+            selectedArea={filterArea}
+            onSelectArea={(area) => setFilterArea(area)}
+          />
+
+          {/* Smart Car Specifications Filter */}
+          <SmartCarSpecsFilter
+            selectedMake={selectedMake}
+            onSelectMake={(make) => setSelectedMake(make)}
+            selectedYearRange={selectedYearRange}
+            onSelectYearRange={(range) => setSelectedYearRange(range)}
+            selectedTransmission={selectedTransmission}
+            onSelectTransmission={(trans) => setSelectedTransmission(trans)}
+            selectedFuelType={selectedFuelType}
+            onSelectFuelType={(fuel) => setSelectedFuelType(fuel)}
+            onResetSpecs={handleResetSpecs}
+          />
         </div>
       )}
 
@@ -525,8 +542,15 @@ export const CarsSection: React.FC<CarsSectionProps> = ({ searchQuery = '' }) =>
               </div>
             )}
 
-            {/* Compact Image Container */}
-            <div className="relative h-32 sm:h-36 md:h-40 bg-slate-100 dark:bg-slate-950 overflow-hidden">
+            {/* Compact Image Container with Lightbox Zoom capability */}
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightboxItem(item);
+              }}
+              className="relative h-32 sm:h-36 md:h-40 bg-slate-100 dark:bg-slate-950 overflow-hidden cursor-zoom-in group/img"
+              title={language === 'ar' ? 'انقر لتكبير صورة السيارة' : 'Click to zoom vehicle image'}
+            >
               {item.video || item.mediaType === 'video' ? (
                 <div className="relative w-full h-full bg-black flex items-center justify-center">
                   <video
@@ -547,8 +571,27 @@ export const CarsSection: React.FC<CarsSectionProps> = ({ searchQuery = '' }) =>
                 />
               )}
 
+              {/* Zoom Hover Overlay Hint */}
+              <div className="absolute inset-0 bg-slate-950/20 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                <span className="px-2.5 py-1 rounded-full bg-slate-950/80 text-white text-[10px] font-bold flex items-center gap-1 border border-slate-700/80 backdrop-blur shadow-lg">
+                  <ZoomIn className="w-3.5 h-3.5 text-amber-400" />
+                  <span>{language === 'ar' ? 'تكبير الصورة 🔍' : 'Zoom Image'}</span>
+                </span>
+              </div>
+
               {/* Floating Quick Bookmark & Web Share API Buttons */}
               <div className="absolute top-2 left-2 z-10 flex items-center gap-1">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setLightboxItem(item);
+                  }}
+                  title={language === 'ar' ? 'تكبير ومعاينة الصورة' : 'Zoom Image Preview'}
+                  className="p-1.5 rounded-xl border backdrop-blur-md transition-all active:scale-90 shadow-md cursor-pointer flex items-center justify-center bg-white/80 dark:bg-slate-950/80 hover:bg-amber-400 hover:text-slate-950 text-amber-500 dark:text-amber-400 border-slate-200 dark:border-slate-700/80"
+                >
+                  <ZoomIn className="w-3.5 h-3.5" />
+                </button>
+
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -571,35 +614,25 @@ export const CarsSection: React.FC<CarsSectionProps> = ({ searchQuery = '' }) =>
                     <Bookmark className="w-3.5 h-3.5" />
                   )}
                 </button>
-
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleNativeShare(item);
-                  }}
-                  title={language === 'ar' ? 'مشاركة الإعلان عبر التطبيقات (Web Share)' : 'Native Share'}
-                  className="p-1.5 rounded-xl border backdrop-blur-md transition-all active:scale-90 shadow-md cursor-pointer flex items-center justify-center bg-white/80 dark:bg-slate-950/80 hover:bg-cyan-500 hover:text-slate-950 text-cyan-500 dark:text-cyan-400 border-slate-200 dark:border-slate-700/80"
-                >
-                  <Share2 className="w-3.5 h-3.5" />
-                </button>
               </div>
 
-              <div className="absolute top-2 right-2 flex items-center gap-1">
-                <span
-                  className={`font-bold text-[9px] px-1.5 py-0.2 rounded-md shadow-xs backdrop-blur-md ${
-                    item.condition === 'new'
-                      ? 'bg-slate-950/80 border border-emerald-500/50 text-emerald-400'
-                      : 'bg-slate-950/80 border border-slate-700/80 text-slate-300'
-                  }`}
-                >
-                  {item.condition === 'new'
-                    ? language === 'ar'
-                      ? 'جديد ✨'
-                      : 'New'
-                    : language === 'ar'
-                    ? 'مستعمل ♻️'
-                    : 'Used'}
-                </span>
+              <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
+                {item.condition === 'certified' ? (
+                  <span className="bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-slate-950 font-black text-[9px] sm:text-[10px] px-2 py-0.5 rounded-lg shadow-lg border border-amber-300 flex items-center gap-1 backdrop-blur-md">
+                    <ShieldCheck className="w-3 h-3 text-slate-950 fill-slate-950" />
+                    <span>{language === 'ar' ? 'مفحوصة ومعتمدة 🛡️' : 'Certified 🛡️'}</span>
+                  </span>
+                ) : item.condition === 'new' ? (
+                  <span className="bg-emerald-950/90 border border-emerald-500/80 text-emerald-300 font-bold text-[9px] sm:text-[10px] px-2 py-0.5 rounded-lg shadow-sm flex items-center gap-1 backdrop-blur-md">
+                    <Sparkles className="w-3 h-3 text-emerald-400" />
+                    <span>{language === 'ar' ? 'جديد (وكالة) ✨' : 'New ✨'}</span>
+                  </span>
+                ) : (
+                  <span className="bg-slate-950/85 border border-slate-700/80 text-slate-200 font-bold text-[9px] sm:text-[10px] px-2 py-0.5 rounded-lg shadow-sm flex items-center gap-1 backdrop-blur-md">
+                    <Tag className="w-3 h-3 text-amber-400" />
+                    <span>{language === 'ar' ? 'مستعمل ♻️' : 'Used ♻️'}</span>
+                  </span>
+                )}
               </div>
 
               <span className="absolute bottom-2 right-2 bg-slate-900/90 text-white text-[10px] px-2 py-0.5 rounded-md border border-slate-700 backdrop-blur font-medium flex items-center gap-1">
@@ -615,48 +648,70 @@ export const CarsSection: React.FC<CarsSectionProps> = ({ searchQuery = '' }) =>
                 <h3 className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm leading-snug line-clamp-2 group-hover:text-emerald-500 transition-colors pt-0.5">
                   {item.title}
                 </h3>
+
+                {/* Specs Chips (Year, Make, Mileage) */}
+                {(item.year || item.make || (item.mileage !== undefined && item.mileage > 0)) && (
+                  <div className="flex flex-wrap items-center gap-1 pt-0.5">
+                    {item.year && (
+                      <span className="bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-300 text-[10px] px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-slate-800 font-mono font-bold">
+                        {item.year}
+                      </span>
+                    )}
+                    {item.make && (
+                      <span className="bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-300 text-[10px] px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-slate-800 font-bold">
+                        {item.make}
+                      </span>
+                    )}
+                    {item.mileage !== undefined && item.mileage > 0 && (
+                      <span className="bg-slate-100 dark:bg-slate-950 text-slate-600 dark:text-slate-400 text-[10px] px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-slate-800 font-mono">
+                        {item.mileage.toLocaleString()} km
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
 
-              {/* Price Row */}
-              <div className="bg-emerald-50/70 dark:bg-slate-950 p-2 rounded-xl border border-emerald-200/60 dark:border-slate-800 flex items-center justify-between dir-ltr">
-                <span className="text-sm sm:text-base font-black text-emerald-700 dark:text-emerald-400 font-mono">
+              {/* Price Row (Wrapped & Compact to Prevent Overlap) */}
+              <div className="bg-emerald-50/70 dark:bg-slate-950/80 px-2.5 py-1.5 rounded-xl border border-emerald-200/60 dark:border-slate-800 flex flex-wrap items-baseline justify-between gap-x-1.5 gap-y-0.5 dir-ltr overflow-hidden">
+                <span className="text-xs sm:text-sm font-black text-emerald-600 dark:text-emerald-400 font-mono shrink-0">
                   ${item.priceUSD.toLocaleString()}
                 </span>
-                <span className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 font-mono dir-rtl font-bold">
-                  {item.priceSYP.toLocaleString()} ل.س
+                <span className="text-[10px] sm:text-[11px] text-slate-600 dark:text-slate-400 font-mono font-bold dir-rtl shrink-0">
+                  {item.priceSYP.toLocaleString()} <span className="text-[9px]">ل.س</span>
                 </span>
               </div>
 
               {/* Compact Quick Buttons */}
-              <div className="flex items-center gap-1 pt-1" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-1 pt-0.5" onClick={(e) => e.stopPropagation()}>
                 <a
-                  href={`tel:${item.phone}`}
-                  className="flex-1 min-h-[30px] flex items-center justify-center gap-1 py-1 px-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold text-[10px] sm:text-[11px] transition-all shadow-xs active:scale-95"
+                  href={`tel:${item.phone || '+963900000000'}`}
+                  title={language === 'ar' ? `اتصال مباشر بالبائع (${item.phone || 'OMS'})` : `Call seller (${item.phone || 'OMS'})`}
+                  className="flex-1 h-7 flex items-center justify-center gap-1 py-1 px-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold text-[10px] transition-all shadow-xs active:scale-95 shrink-0"
                 >
-                  <Phone className="w-3 h-3" />
-                  <span>{language === 'ar' ? 'اتصال' : 'Call'}</span>
+                  <Phone className="w-3 h-3 shrink-0" />
+                  <span className="truncate">{language === 'ar' ? 'اتصال' : 'Call'}</span>
                 </a>
 
                 <button
                   onClick={() => handleOpenPayment(item)}
-                  className="flex-1 min-h-[30px] flex items-center justify-center gap-1 py-1 px-1.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black rounded-lg text-[10px] sm:text-[11px] transition-all shadow-xs active:scale-95 cursor-pointer"
+                  className="flex-1 h-7 flex items-center justify-center gap-1 py-1 px-1.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black rounded-lg text-[10px] transition-all shadow-xs active:scale-95 cursor-pointer shrink-0"
                 >
-                  <CreditCard className="w-3 h-3 text-slate-950" />
+                  <CreditCard className="w-3 h-3 text-slate-950 shrink-0" />
                   <span>{language === 'ar' ? 'حجز 🛒' : 'Reserve'}</span>
                 </button>
 
                 <button
-                  onClick={() => handleNativeShare(item)}
-                  title={language === 'ar' ? 'مشاركة الإعلان عبر التطبيقات (Web Share)' : 'Native Share'}
-                  className="p-1.5 min-h-[30px] bg-slate-800 hover:bg-cyan-500 hover:text-slate-950 text-cyan-400 border border-cyan-500/30 rounded-lg font-bold text-xs flex items-center justify-center transition-all active:scale-95 cursor-pointer shrink-0"
+                  onClick={() => setShareItem(item)}
+                  title={language === 'ar' ? 'مشاركة الإعلان (واتساب، تليجرام، رابط)' : 'Share Listing'}
+                  className="w-7 h-7 bg-amber-500/20 hover:bg-amber-500 hover:text-slate-950 text-amber-400 border border-amber-500/40 rounded-lg font-bold text-xs flex items-center justify-center transition-all active:scale-95 cursor-pointer shrink-0"
                 >
-                  <Share2 className="w-3.5 h-3.5" />
+                  <Share2 className="w-3.5 h-3.5 shrink-0" />
                 </button>
 
                 <button
                   onClick={() => setDetailItem(item)}
                   title={language === 'ar' ? 'عرض باقي التفاصيل والتأكيدات' : 'View Details'}
-                  className="p-1.5 min-h-[30px] bg-slate-800 hover:bg-slate-700 text-sky-300 border border-sky-500/30 rounded-lg font-bold text-xs flex items-center justify-center transition-all active:scale-95 cursor-pointer shrink-0"
+                  className="w-7 h-7 bg-slate-800 hover:bg-slate-700 text-sky-300 border border-sky-500/30 rounded-lg font-bold text-xs flex items-center justify-center transition-all active:scale-95 cursor-pointer shrink-0"
                 >
                   <MoreHorizontal className="w-3.5 h-3.5" />
                 </button>
@@ -786,6 +841,30 @@ export const CarsSection: React.FC<CarsSectionProps> = ({ searchQuery = '' }) =>
           setReportItem(item);
         }}
         isCompared={detailItem ? comparedItems.some((i) => i.id === detailItem.id) : false}
+      />
+
+      {/* Image Lightbox / Zoom Modal */}
+      <ImageLightboxModal
+        isOpen={!!lightboxItem}
+        onClose={() => setLightboxItem(null)}
+        imageUrl={lightboxItem?.image || ''}
+        title={lightboxItem?.title || ''}
+        priceUSD={lightboxItem?.priceUSD}
+        priceSYP={lightboxItem?.priceSYP}
+        city={lightboxItem?.city}
+        phone={lightboxItem?.phone}
+        images={lightboxItem ? [lightboxItem.image, ...(lightboxItem.gallery || [])] : []}
+        onReserve={() => {
+          if (lightboxItem) {
+            handleOpenPayment(lightboxItem);
+            setLightboxItem(null);
+          }
+        }}
+        onShare={() => {
+          if (lightboxItem) {
+            handleNativeShare(lightboxItem);
+          }
+        }}
       />
     </div>
   );

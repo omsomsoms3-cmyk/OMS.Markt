@@ -201,10 +201,16 @@ export const SavedListingsSection: React.FC = () => {
                 {bookmarks.length}
               </span>
             </h1>
-            <p className="text-xs text-slate-300 max-w-2xl">
-              {language === 'ar'
-                ? 'تصلك كافة الإعلانات التي قمت بحفظها في المفضلة، ويمكنك تأكيد أي إعلان ومراجعة تفاصيله في وقت لاحق.'
-                : 'Save listings to your favorites list and confirm them whenever you are ready.'}
+            <p className="text-xs text-slate-300 max-w-2xl flex items-center gap-1.5 flex-wrap">
+              <span>
+                {language === 'ar'
+                  ? 'تصلك كافة الإعلانات التي قمت بحفظها في المفضلة، ويمكنك تأكيد أي إعلان ومراجعة تفاصيله في وقت لاحق.'
+                  : 'Save listings to your favorites list and confirm them whenever you are ready.'}
+              </span>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 rounded-md text-[10px] font-bold">
+                <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                {language === 'ar' ? 'حفظ تلقائي محلي (LocalStorage) + سحابي' : 'Auto LocalStorage + Cloud Sync'}
+              </span>
             </p>
           </div>
 

@@ -62,6 +62,7 @@ export const BookmarkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 phone: data.phone || '0944000000',
                 priceUSD: data.priceUSD,
                 priceSYP: data.priceSYP,
+                image: data.image || '',
                 confirmed: data.confirmed || false,
                 savedAt: data.createdAt || new Date().toISOString(),
                 originalData: data.originalData || {},
@@ -72,13 +73,24 @@ export const BookmarkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           if (remoteBookmarks.length > 0) {
             setBookmarks((prev) => {
               const combinedMap = new Map<string, SavedListingItem>();
-              remoteBookmarks.forEach((item) => combinedMap.set(item.id, item));
-              prev.forEach((item) => {
-                if (!combinedMap.has(item.id)) {
+              // First add local items so local additions remain intact
+              prev.forEach((item) => combinedMap.set(item.id, item));
+              // Merge remote items, preferring remote if confirmed state changed remotely
+              remoteBookmarks.forEach((item) => {
+                const existing = combinedMap.get(item.id);
+                if (existing) {
+                  combinedMap.set(item.id, { ...existing, ...item });
+                } else {
                   combinedMap.set(item.id, item);
                 }
               });
-              return Array.from(combinedMap.values());
+              const updatedList = Array.from(combinedMap.values());
+              try {
+                localStorage.setItem('oms_saved_bookmarks', JSON.stringify(updatedList));
+              } catch (e) {
+                console.error('Error saving merged bookmarks to localStorage:', e);
+              }
+              return updatedList;
             });
           }
         },
@@ -103,6 +115,7 @@ export const BookmarkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     setBookmarks((prev) => {
       const exists = prev.some((b) => b.id === docId);
+      let updated: SavedListingItem[];
       if (exists) {
         logUserActivity('إزالة من المحفوظات', `تم إزالة "${item.title}" من قائمة الإعلانات المحفوظة`);
         try {
@@ -110,7 +123,7 @@ export const BookmarkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             console.warn('Could not delete bookmark from Firestore:', e)
           );
         } catch {}
-        return prev.filter((b) => b.id !== docId);
+        updated = prev.filter((b) => b.id !== docId);
       } else {
         logUserActivity('حفظ إعلان', `تم إضافة "${item.title}" إلى المحفوظات (${item.itemType || 'إعلان'})`);
         try {
@@ -129,8 +142,12 @@ export const BookmarkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             handleFirestoreError(err, OperationType.WRITE, `bookmarks/${docId}`);
           });
         } catch {}
-        return [cleanItem, ...prev];
+        updated = [cleanItem, ...prev];
       }
+      try {
+        localStorage.setItem('oms_saved_bookmarks', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
     });
   };
 
@@ -145,7 +162,11 @@ export const BookmarkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           console.warn('Could not delete bookmark from Firestore:', e)
         );
       } catch {}
-      return prev.filter((b) => b.id !== id);
+      const updated = prev.filter((b) => b.id !== id);
+      try {
+        localStorage.setItem('oms_saved_bookmarks', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
     });
   };
 
@@ -206,6 +227,9 @@ export const BookmarkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         deleteDoc(doc(db, 'bookmarks', b.id)).catch(() => {});
       } catch {}
     });
+    try {
+      localStorage.removeItem('oms_saved_bookmarks');
+    } catch (e) {}
     setBookmarks([]);
   };
 

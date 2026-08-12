@@ -3,7 +3,7 @@ import { TabType } from '../types';
 import { OmsLogo } from './OmsLogo';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
-import { Globe, TrendingUp, Home, Car, ShoppingBag, Truck, BookOpen, MessageSquare, ExternalLink, Settings, Languages, User, PlusCircle, Search, X, ChevronRight, ChevronDown, SlidersHorizontal, Tag, MapPin, Share2, Briefcase, Flag, ShieldAlert, Sun, Moon, Bell, BellRing, History, Clock, Trash2, Bookmark, Zap, Mic, MicOff, Volume2, QrCode, Building, Compass, HelpCircle } from 'lucide-react';
+import { Globe, TrendingUp, Home, Car, ShoppingBag, Truck, BookOpen, MessageSquare, ExternalLink, Settings, Languages, User, PlusCircle, Search, X, ChevronRight, ChevronDown, SlidersHorizontal, Tag, MapPin, Share2, Briefcase, Flag, ShieldAlert, Sun, Moon, Bell, BellRing, History, Clock, Trash2, Bookmark, Zap, Mic, MicOff, Volume2, QrCode, Building, Compass, HelpCircle, Download } from 'lucide-react';
 import { initialCarListings, initialRealEstateListings, initialTaxiOrders, initialJobListings } from '../data/mockData';
 import { useReports } from '../context/ReportContext';
 import { useBookmarks } from '../context/BookmarkContext';
@@ -11,6 +11,7 @@ import { useAppMode } from '../context/AppModeContext';
 import { useAuth } from '../context/AuthContext';
 import { AdminReportsModal } from './AdminReportsModal';
 import { QRScannerModal } from './QRScannerModal';
+import { NetworkQualityIndicator } from './NetworkQualityIndicator';
 
 interface NavbarProps {
   activeTab: TabType;
@@ -25,6 +26,7 @@ interface NavbarProps {
   onOpenIntegrations?: () => void;
   onOpenAppModeModal?: () => void;
   onOpenTour?: () => void;
+  onOpenInstallGuide?: () => void;
   unreadNotificationsCount?: number;
   searchQuery?: string;
   setSearchQuery?: (query: string) => void;
@@ -43,6 +45,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenIntegrations,
   onOpenAppModeModal,
   onOpenTour,
+  onOpenInstallGuide,
   unreadNotificationsCount = 0,
   searchQuery = '',
   setSearchQuery,
@@ -960,6 +963,9 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Actions, Settings & Quick Controls Hub */}
         <div className="flex flex-wrap items-center justify-center sm:justify-end gap-1.5 w-full sm:w-auto shrink-0">
+          {/* Network Connection Quality Warning Indicator */}
+          <NetworkQualityIndicator />
+
           {/* Consolidated Quick Controls Button (Theme, Language, Share, Integrations & App Mode) */}
           <div className="relative shrink-0" ref={quickMenuRef}>
             <button
@@ -1132,10 +1138,48 @@ export const Navbar: React.FC<NavbarProps> = ({
                       {language === 'ar' ? 'ضبط' : 'Set'}
                     </span>
                   </button>
+                  {/* 6. Install App on Mobile */}
+                  {onOpenInstallGuide && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsQuickMenuOpen(false);
+                        onOpenInstallGuide();
+                      }}
+                      className="w-full flex items-center justify-between p-2.5 rounded-xl bg-emerald-950/40 hover:bg-emerald-900/60 border border-emerald-500/30 transition-all text-xs font-bold text-slate-200 cursor-pointer group active:scale-98"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400">
+                          <Download className="w-4 h-4 text-emerald-400" />
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs font-bold text-emerald-300">{language === 'ar' ? 'تثبيت التطبيق على هاتفك' : 'Install App on Mobile'}</p>
+                          <p className="text-[10px] text-slate-400">
+                            {language === 'ar' ? 'إضافة للشاشة الرئيسية (Add to Home Screen) 📲' : 'Add to Home Screen 📲'}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] bg-emerald-500 text-slate-950 px-2.5 py-1 rounded-lg font-black transition-colors shadow-sm">
+                        {language === 'ar' ? 'تثبيت' : 'Install'}
+                      </span>
+                    </button>
+                  )}
                 </div>
               </>
             )}
           </div>
+
+          {/* Install Guide Button in Header */}
+          {onOpenInstallGuide && (
+            <button
+              onClick={onOpenInstallGuide}
+              title={language === 'ar' ? 'تثبيت التطبيق على هاتفك مجاناً (Add to Home Screen)' : 'Install App to Home Screen'}
+              className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs rounded-xl transition-all shadow-md active:scale-95 cursor-pointer shrink-0"
+            >
+              <Download className="w-4 h-4" />
+              <span>{language === 'ar' ? 'تثبيت التطبيق 📲' : 'Install App 📲'}</span>
+            </button>
+          )}
 
           {/* Saved Listings Quick Access Button with Badge */}
           <button

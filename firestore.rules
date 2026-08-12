@@ -13,6 +13,11 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // Users collection
+    match /users/{userId} {
+      allow read, write: if true;
+    }
+
     // Cars collection
     match /cars/{carId} {
       allow read, write: if true;
@@ -48,6 +53,11 @@ service cloud.firestore {
 
     // Bookmarks collection
     match /bookmarks/{bookmarkId} {
+      allow read, write: if true;
+    }
+
+    // FCM Notifications collection
+    match /fcm_notifications/{notifId} {
       allow read, write: if true;
     }
   }

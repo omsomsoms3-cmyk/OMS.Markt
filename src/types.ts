@@ -55,7 +55,7 @@ export interface CarListing {
   id: string;
   title: string;
   category?: 'car' | 'tools' | 'electronics' | 'appliances' | 'furniture' | 'realestate' | 'service';
-  condition?: 'new' | 'used';
+  condition?: 'new' | 'used' | 'certified' | string;
   make?: string;
   model?: string;
   year?: number;

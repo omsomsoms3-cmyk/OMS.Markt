@@ -4,17 +4,21 @@ import { initialRealEstateListings } from '../data/mockData';
 import { subscribeToRealEstateListings, saveRealEstateToFirestore } from '../lib/listingsService';
 import { getListingDate } from '../lib/dateUtils';
 import { PostDateBadge } from './PostDateBadge';
-import { Home, Plus, Phone, MapPin, Tag, Filter, CheckCircle2, Building, DollarSign, X, ArrowUpDown, RefreshCw, Calendar, Maximize2, Share2, Flag, Trash2, Bookmark, BookmarkCheck, Globe, CreditCard, ShoppingBag, QrCode, MoreHorizontal } from 'lucide-react';
+import { Home, Plus, Phone, MapPin, Tag, Filter, CheckCircle2, Building, DollarSign, X, ArrowUpDown, RefreshCw, Calendar, Maximize2, Share2, Flag, Trash2, Bookmark, BookmarkCheck, Globe, CreditCard, ShoppingBag, QrCode, MoreHorizontal, ZoomIn } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { ShareAppModal } from './ShareAppModal';
 import { ReportModal } from './ReportModal';
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
 import { PaymentModal, PaymentItemDetails } from './PaymentModal';
 import { AdDetailModal } from './AdDetailModal';
-import { shareListingItem } from '../lib/share';
+import { ImageLightboxModal } from './ImageLightboxModal';
+import { shareListingItem, shareToWhatsApp, shareToTelegram } from '../lib/share';
 import { useBookmarks } from '../context/BookmarkContext';
 import { INTERNATIONAL_COUNTRIES } from '../lib/locations';
-import { ListingFilterChips, PricePresetOption } from './ListingFilterChips';
+import { PricePresetOption, ListingFilterChips } from './ListingFilterChips';
+import { PriceRangeSlider } from './PriceRangeSlider';
+import { SmartLocationFilter } from './SmartLocationFilter';
+import { SmartRealEstateSpecsFilter } from './SmartRealEstateSpecsFilter';
 import { useReports } from '../context/ReportContext';
 import { QuickShareButtons } from './QuickShareButtons';
 import { LazyImage } from './LazyImage';
@@ -42,12 +46,18 @@ export const RealEstateSection: React.FC<RealEstateSectionProps> = ({ searchQuer
   const [filterType, setFilterType] = useState<'all' | 'sale' | 'rent'>('all');
   const [filterCategory, setFilterCategory] = useState<'all' | 'apartment' | 'house' | 'shop' | 'land' | 'hotel' | 'furnished_room' | 'farm' | 'chalet'>('all');
   const [filterCity, setFilterCity] = useState<string>('all');
+  const [filterArea, setFilterArea] = useState<string>('');
   const [minPrice, setMinPrice] = useState<string>('');
   const [maxPrice, setMaxPrice] = useState<string>('');
   const [selectedPricePreset, setSelectedPricePreset] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
   const [sortOption, setSortOption] = useState<'default' | 'price_asc' | 'price_desc' | 'newest' | 'oldest' | 'space_desc'>('default');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState<boolean>(false);
+
+  // Smart Property Specs Filter State
+  const [selectedRooms, setSelectedRooms] = useState<string>('all');
+  const [selectedSpaceRange, setSelectedSpaceRange] = useState<string>('all');
+  const [selectedCladding, setSelectedCladding] = useState<string>('all');
 
   const realEstatePricePresets: PricePresetOption[] = [
     { id: 'all', labelAr: 'الكل 💵', labelEn: 'All Prices' },
@@ -63,10 +73,17 @@ export const RealEstateSection: React.FC<RealEstateSectionProps> = ({ searchQuer
     setMaxPrice(max !== undefined ? max.toString() : '');
   };
 
+  const handleResetSpecs = () => {
+    setSelectedRooms('all');
+    setSelectedSpaceRange('all');
+    setSelectedCladding('all');
+  };
+
   const [shareItem, setShareItem] = useState<RealEstateListing | null>(null);
   const [reportItem, setReportItem] = useState<RealEstateListing | null>(null);
   const [deleteItem, setDeleteItem] = useState<RealEstateListing | null>(null);
   const [detailItem, setDetailItem] = useState<RealEstateListing | null>(null);
+  const [lightboxItem, setLightboxItem] = useState<RealEstateListing | null>(null);
   const [paymentItem, setPaymentItem] = useState<PaymentItemDetails | null>(null);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 
@@ -87,19 +104,27 @@ export const RealEstateSection: React.FC<RealEstateSectionProps> = ({ searchQuer
     setFilterType('all');
     setFilterCategory('all');
     setFilterCity('all');
+    setFilterArea('');
     setMinPrice('');
     setMaxPrice('');
     setSelectedPricePreset('all');
     setDateFilter('all');
     setSortOption('default');
+    setSelectedRooms('all');
+    setSelectedSpaceRange('all');
+    setSelectedCladding('all');
   };
 
   const activeFiltersCount =
     (filterType !== 'all' ? 1 : 0) +
     (filterCategory !== 'all' ? 1 : 0) +
     (filterCity !== 'all' ? 1 : 0) +
+    (filterArea ? 1 : 0) +
     (selectedPricePreset !== 'all' || minPrice || maxPrice ? 1 : 0) +
-    (dateFilter !== 'all' ? 1 : 0);
+    (dateFilter !== 'all' ? 1 : 0) +
+    (selectedRooms !== 'all' ? 1 : 0) +
+    (selectedSpaceRange !== 'all' ? 1 : 0) +
+    (selectedCladding !== 'all' ? 1 : 0);
 
   const filtered = listings
     .filter((item) => {
@@ -111,6 +136,27 @@ export const RealEstateSection: React.FC<RealEstateSectionProps> = ({ searchQuer
         const targetCity = filterCity.toLowerCase();
         const matchesLocation = itemCity.includes(targetCity) || targetCity.includes(itemCity);
         if (!matchesLocation) return false;
+      }
+
+      if (filterArea) {
+        const matchesArea = item.city.includes(filterArea) || item.area.includes(filterArea) || item.title.includes(filterArea);
+        if (!matchesArea) return false;
+      }
+
+      // Rooms count filter
+      if (selectedRooms !== 'all' && item.rooms !== undefined) {
+        if (selectedRooms === '1' && item.rooms !== 1) return false;
+        if (selectedRooms === '2' && item.rooms !== 2) return false;
+        if (selectedRooms === '3' && item.rooms !== 3) return false;
+        if (selectedRooms === '4_plus' && item.rooms < 4) return false;
+      }
+
+      // Space range filter (m²)
+      if (selectedSpaceRange !== 'all' && item.spaceSqM) {
+        if (selectedSpaceRange === 'under_80' && item.spaceSqM >= 80) return false;
+        if (selectedSpaceRange === '80_150' && (item.spaceSqM < 80 || item.spaceSqM > 150)) return false;
+        if (selectedSpaceRange === '150_300' && (item.spaceSqM < 150 || item.spaceSqM > 300)) return false;
+        if (selectedSpaceRange === 'over_300' && item.spaceSqM <= 300) return false;
       }
 
       const minP = minPrice ? parseFloat(minPrice) : 0;
@@ -178,7 +224,7 @@ export const RealEstateSection: React.FC<RealEstateSectionProps> = ({ searchQuer
   } = useInfiniteScroll<RealEstateListing>(filtered, {
     initialCount: 12,
     step: 12,
-    dependencies: [filterType, filterCategory, filterCity, minPrice, maxPrice, dateFilter, sortOption, searchQuery],
+    dependencies: [filterType, filterCategory, filterCity, filterArea, minPrice, maxPrice, dateFilter, sortOption, searchQuery, selectedRooms, selectedSpaceRange, selectedCladding],
   });
 
   const handleShareRealEstate = async (item: RealEstateListing) => {
@@ -371,94 +417,62 @@ export const RealEstateSection: React.FC<RealEstateSectionProps> = ({ searchQuer
 
       {/* Advanced Filter Options Drawer */}
       {showAdvancedFilters && (
-        <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-3 animate-fadeIn shadow-inner">
+        <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-4 animate-fadeIn shadow-2xl">
           <div className="flex items-center justify-between pb-2 border-b border-slate-800 text-xs font-bold text-slate-300">
-            <span className="flex items-center gap-1.5 text-indigo-400">
+            <span className="flex items-center gap-1.5 text-emerald-400">
               <Filter className="w-4 h-4" />
-              <span>{language === 'ar' ? 'تحديد مواصفات العقار والسعر' : 'Specify Property Specs & Price'}</span>
+              <span>{language === 'ar' ? 'تخصيص نطاق البحث والفلترة العقارية' : 'Smart Real Estate Filter Console'}</span>
             </span>
             <button
               onClick={resetFilters}
-              className="text-slate-400 hover:text-red-400 flex items-center gap-1 transition-colors text-[11px]"
+              className="text-slate-400 hover:text-red-400 flex items-center gap-1 transition-colors text-[11px] font-bold cursor-pointer"
             >
               <RefreshCw className="w-3 h-3" />
-              <span>{language === 'ar' ? 'إعادة ضبط الفلاتر' : 'Reset Filters'}</span>
+              <span>{language === 'ar' ? 'إعادة ضبط كل الفلاتر' : 'Reset All Filters'}</span>
             </button>
           </div>
 
-          <div className="grid sm:grid-cols-4 gap-3">
-            {/* Filter by City / Location */}
-            <div className="space-y-1">
-              <label className="block text-[11px] font-bold text-slate-400 flex items-center gap-1">
-                <Globe className="w-3 h-3 text-emerald-400" />
-                <span>{language === 'ar' ? 'الدولة والمدينة 🌍' : 'Country & City 🌍'}</span>
-              </label>
-              <select
-                value={filterCity}
-                onChange={(e) => setFilterCity(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 font-medium"
-              >
-                <option value="all">{language === 'ar' ? 'جميع البلدان والمدن 🌍' : 'All Countries & Cities'}</option>
-                {INTERNATIONAL_COUNTRIES.map((c) => (
-                  <optgroup key={c.code} label={`${c.flag} ${language === 'ar' ? c.nameAr : c.nameEn}`}>
-                    <option value={c.nameAr}>{c.flag} كل {c.nameAr}</option>
-                    {c.cities.map((ci) => (
-                      <option key={ci.nameAr} value={ci.nameAr}>
-                        {c.flag} {ci.nameAr}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
-            </div>
+          {/* Interactive Price Range Slider */}
+          <PriceRangeSlider
+            minVal={minPrice ? parseFloat(minPrice) : 0}
+            maxVal={maxPrice ? parseFloat(maxPrice) : 100000}
+            minLimit={0}
+            maxLimit={100000}
+            step={200}
+            currencySymbol="$"
+            onChange={(min, max) => {
+              setMinPrice(min > 0 ? min.toString() : '');
+              setMaxPrice(max < 100000 ? max.toString() : '');
+            }}
+            presetRanges={[
+              { labelAr: 'إيجار اقتصادي (< $300) 🏠', labelEn: '< $300 Rent', min: 0, max: 300 },
+              { labelAr: 'إيجار متوسط ($300 - $1,000) 🔑', labelEn: '$300 - $1k Rent', min: 300, max: 1000 },
+              { labelAr: 'شراء متوسط ($1,000 - $30,000) 🏘️', labelEn: '$1k - $30k Buy', min: 1000, max: 30000 },
+              { labelAr: 'شراء واستثمار ($30,000 - $80,000) 🏬', labelEn: '$30k - $80k', min: 30000, max: 80000 },
+              { labelAr: 'عقارات فاخرة (> $80,000) 💎', labelEn: '> $80k Luxury 💎', min: 80000, max: 100000 },
+            ]}
+          />
 
-            {/* Filter Property Category */}
-            <div className="space-y-1">
-              <label className="block text-[11px] font-bold text-slate-400 flex items-center gap-1">
-                <Building className="w-3 h-3 text-indigo-400" />
-                <span>{language === 'ar' ? 'نوع العقار' : 'Category'}</span>
-              </label>
-              <select
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value as any)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
-              >
-                <option value="all">{language === 'ar' ? 'جميع الأنماط' : 'All Types'}</option>
-                <option value="apartment">{language === 'ar' ? 'شقق سكنية 🏠' : 'Apartment'}</option>
-                <option value="house">{language === 'ar' ? 'بيوت وفلل 🏡' : 'House / Villa'}</option>
-                <option value="shop">{language === 'ar' ? 'محلات تجارية 🏬' : 'Commercial Shop'}</option>
-                <option value="land">{language === 'ar' ? 'أراضي ومزارع 🏞️' : 'Land / Farm'}</option>
-              </select>
-            </div>
+          {/* Smart Location Filter */}
+          <SmartLocationFilter
+            selectedCity={filterCity}
+            onSelectCity={(city) => setFilterCity(city)}
+            selectedArea={filterArea}
+            onSelectArea={(area) => setFilterArea(area)}
+          />
 
-            {/* Min Price ($ USD) */}
-            <div className="space-y-1">
-              <label className="block text-[11px] font-bold text-slate-400">
-                {language === 'ar' ? 'الحد الأدنى للسعر ($ USD)' : 'Min Price ($)'}
-              </label>
-              <input
-                type="number"
-                placeholder="0"
-                value={minPrice}
-                onChange={(e) => setMinPrice(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 font-mono focus:outline-none focus:border-indigo-500"
-              />
-            </div>
-
-            {/* Max Price ($ USD) */}
-            <div className="space-y-1">
-              <label className="block text-[11px] font-bold text-slate-400">
-                {language === 'ar' ? 'الحد الأعلى للسعر ($ USD)' : 'Max Price ($)'}
-              </label>
-              <input
-                type="number"
-                placeholder="50000"
-                value={maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 font-mono focus:outline-none focus:border-indigo-500"
-              />
-            </div>
-          </div>
+          {/* Smart Real Estate Specifications Filter */}
+          <SmartRealEstateSpecsFilter
+            selectedCategory={filterCategory}
+            onSelectCategory={(cat) => setFilterCategory(cat as any)}
+            selectedRooms={selectedRooms}
+            onSelectRooms={(rooms) => setSelectedRooms(rooms)}
+            selectedSpaceRange={selectedSpaceRange}
+            onSelectSpaceRange={(space) => setSelectedSpaceRange(space)}
+            selectedCladding={selectedCladding}
+            onSelectCladding={(cladding) => setSelectedCladding(cladding)}
+            onResetSpecs={handleResetSpecs}
+          />
         </div>
       )}
 
@@ -470,8 +484,15 @@ export const RealEstateSection: React.FC<RealEstateSectionProps> = ({ searchQuer
             onClick={() => setDetailItem(item)}
             className="bg-white dark:bg-slate-800/90 border border-emerald-500/25 dark:border-slate-700/80 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:border-emerald-500/60 transition-all flex flex-col justify-between group cursor-pointer relative"
           >
-            {/* Compact Image Container */}
-            <div className="relative h-32 sm:h-36 md:h-40 bg-slate-100 dark:bg-slate-900 overflow-hidden">
+            {/* Compact Image Container with Lightbox Zoom capability */}
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightboxItem(item);
+              }}
+              className="relative h-32 sm:h-36 md:h-40 bg-slate-100 dark:bg-slate-900 overflow-hidden cursor-zoom-in group/img"
+              title={language === 'ar' ? 'انقر لتكبير الصورة العقارية' : 'Click to zoom property image'}
+            >
               <LazyImage
                 src={item.images[0]}
                 alt={item.title}
@@ -485,8 +506,27 @@ export const RealEstateSection: React.FC<RealEstateSectionProps> = ({ searchQuer
                 </span>
               </div>
 
+              {/* Zoom Hover Overlay Hint */}
+              <div className="absolute inset-0 bg-slate-950/20 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                <span className="px-2.5 py-1 rounded-full bg-slate-950/80 text-white text-[10px] font-bold flex items-center gap-1 border border-slate-700/80 backdrop-blur shadow-lg">
+                  <ZoomIn className="w-3.5 h-3.5 text-amber-400" />
+                  <span>{language === 'ar' ? 'تكبير الصورة 🔍' : 'Zoom Image'}</span>
+                </span>
+              </div>
+
               {/* Bookmark & Web Share Overlay Buttons */}
               <div className="absolute top-2 left-2 z-10 flex items-center gap-1">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setLightboxItem(item);
+                  }}
+                  title={language === 'ar' ? 'تكبير ومعاينة الصورة' : 'Zoom Image Preview'}
+                  className="p-1.5 rounded-xl border backdrop-blur-md transition-all active:scale-90 shadow-md cursor-pointer flex items-center justify-center bg-white/80 dark:bg-slate-950/80 text-amber-500 border-slate-200 dark:border-slate-700 hover:bg-amber-400 hover:text-slate-950"
+                >
+                  <ZoomIn className="w-3.5 h-3.5" />
+                </button>
+
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -505,17 +545,6 @@ export const RealEstateSection: React.FC<RealEstateSectionProps> = ({ searchQuer
                     <Bookmark className="w-3.5 h-3.5" />
                   )}
                 </button>
-
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleShareRealEstate(item);
-                  }}
-                  title={language === 'ar' ? 'مشاركة الإعلان العقاري عبر التطبيقات' : 'Native Share'}
-                  className="p-1.5 rounded-xl border backdrop-blur-md transition-all active:scale-90 shadow-md cursor-pointer bg-white/80 dark:bg-slate-950/80 text-cyan-500 dark:text-cyan-400 border-slate-200 dark:border-slate-700 hover:bg-cyan-500 hover:text-slate-950"
-                >
-                  <Share2 className="w-3.5 h-3.5" />
-                </button>
               </div>
 
               <span className="absolute bottom-2 right-2 bg-slate-900/90 text-white text-[10px] px-2 py-0.5 rounded-md border border-slate-700 backdrop-blur font-medium flex items-center gap-1">
@@ -533,24 +562,24 @@ export const RealEstateSection: React.FC<RealEstateSectionProps> = ({ searchQuer
                 </h3>
               </div>
 
-              {/* Price Row */}
-              <div className="bg-emerald-50/60 dark:bg-slate-950/70 p-2 rounded-xl border border-emerald-200/60 dark:border-slate-700/50 flex items-center justify-between dir-ltr">
-                <span className="text-sm sm:text-base font-black text-emerald-700 dark:text-emerald-400 font-mono">
+              {/* Price Row (Wrapped & Compact to Prevent Overlap) */}
+              <div className="bg-emerald-50/70 dark:bg-slate-950/80 px-2.5 py-1.5 rounded-xl border border-emerald-200/60 dark:border-slate-800 flex flex-wrap items-baseline justify-between gap-x-1.5 gap-y-0.5 dir-ltr overflow-hidden">
+                <span className="text-xs sm:text-sm font-black text-emerald-600 dark:text-emerald-400 font-mono shrink-0">
                   ${item.priceUSD.toLocaleString()}
                 </span>
-                <span className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 font-mono dir-rtl font-bold">
-                  {item.priceSYP.toLocaleString()} ل.س
+                <span className="text-[10px] sm:text-[11px] text-slate-600 dark:text-slate-400 font-mono font-bold dir-rtl shrink-0">
+                  {item.priceSYP.toLocaleString()} <span className="text-[9px]">ل.س</span>
                 </span>
               </div>
 
               {/* Quick Reserve/Call Buttons */}
-              <div className="flex items-center gap-1 pt-1" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-1 pt-0.5" onClick={(e) => e.stopPropagation()}>
                 <a
                   href={`tel:${item.phone}`}
-                  className="flex-1 min-h-[30px] flex items-center justify-center gap-1 py-1 px-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold text-[10px] sm:text-[11px] transition-all shadow-xs active:scale-95"
+                  className="flex-1 h-7 flex items-center justify-center gap-1 py-1 px-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold text-[10px] transition-all shadow-xs active:scale-95 shrink-0"
                 >
-                  <Phone className="w-3 h-3" />
-                  <span>{language === 'ar' ? 'اتصال' : 'Call'}</span>
+                  <Phone className="w-3 h-3 shrink-0" />
+                  <span className="truncate">{language === 'ar' ? 'اتصال' : 'Call'}</span>
                 </a>
 
                 <button
@@ -565,24 +594,24 @@ export const RealEstateSection: React.FC<RealEstateSectionProps> = ({ searchQuer
                     });
                     setIsPaymentOpen(true);
                   }}
-                  className="flex-1 min-h-[30px] flex items-center justify-center gap-1 py-1 px-1.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black rounded-lg text-[10px] sm:text-[11px] transition-all shadow-xs active:scale-95 cursor-pointer"
+                  className="flex-1 h-7 flex items-center justify-center gap-1 py-1 px-1.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black rounded-lg text-[10px] transition-all shadow-xs active:scale-95 cursor-pointer shrink-0"
                 >
-                  <CreditCard className="w-3 h-3 text-slate-950" />
+                  <CreditCard className="w-3 h-3 text-slate-950 shrink-0" />
                   <span>{language === 'ar' ? 'حجز 🛒' : 'Reserve'}</span>
                 </button>
 
                 <button
-                  onClick={() => handleShareRealEstate(item)}
-                  title={language === 'ar' ? 'مشاركة الإعلان العقاري عبر التطبيقات (Web Share)' : 'Native Share'}
-                  className="p-1.5 min-h-[30px] bg-slate-800 hover:bg-cyan-500 hover:text-slate-950 text-cyan-400 border border-cyan-500/30 rounded-lg font-bold text-xs flex items-center justify-center transition-all active:scale-95 cursor-pointer shrink-0"
+                  onClick={() => setShareItem(item)}
+                  title={language === 'ar' ? 'مشاركة الإعلان العقاري (واتساب، تليجرام، رابط)' : 'Share Property'}
+                  className="w-7 h-7 bg-amber-500/20 hover:bg-amber-500 hover:text-slate-950 text-amber-400 border border-amber-500/40 rounded-lg font-bold text-xs flex items-center justify-center transition-all active:scale-95 cursor-pointer shrink-0"
                 >
-                  <Share2 className="w-3.5 h-3.5" />
+                  <Share2 className="w-3.5 h-3.5 shrink-0" />
                 </button>
 
                 <button
                   onClick={() => setDetailItem(item)}
                   title={language === 'ar' ? 'عرض باقي التفاصيل والتأكيدات' : 'View Details'}
-                  className="p-1.5 min-h-[30px] bg-slate-800 hover:bg-slate-700 text-sky-300 border border-sky-500/30 rounded-lg font-bold text-xs flex items-center justify-center transition-all active:scale-95 cursor-pointer shrink-0"
+                  className="w-7 h-7 bg-slate-800 hover:bg-slate-700 text-sky-300 border border-sky-500/30 rounded-lg font-bold text-xs flex items-center justify-center transition-all active:scale-95 cursor-pointer shrink-0"
                 >
                   <MoreHorizontal className="w-3.5 h-3.5" />
                 </button>
@@ -791,6 +820,38 @@ export const RealEstateSection: React.FC<RealEstateSectionProps> = ({ searchQuer
         onOpenReport={(item) => {
           setDetailItem(null);
           setReportItem(item);
+        }}
+      />
+
+      {/* Image Lightbox Modal */}
+      <ImageLightboxModal
+        isOpen={!!lightboxItem}
+        onClose={() => setLightboxItem(null)}
+        imageUrl={lightboxItem?.images?.[0] || ''}
+        title={lightboxItem?.title || ''}
+        priceUSD={lightboxItem?.priceUSD}
+        priceSYP={lightboxItem?.priceSYP}
+        city={lightboxItem?.city}
+        phone={lightboxItem?.phone}
+        images={lightboxItem?.images || []}
+        onReserve={() => {
+          if (lightboxItem) {
+            setPaymentItem({
+              id: lightboxItem.id,
+              title: lightboxItem.title,
+              priceUSD: lightboxItem.priceUSD,
+              priceSYP: lightboxItem.priceSYP,
+              image: lightboxItem.images?.[0] || '',
+              type: 'real_estate',
+            });
+            setIsPaymentOpen(true);
+            setLightboxItem(null);
+          }
+        }}
+        onShare={() => {
+          if (lightboxItem) {
+            handleShareRealEstate(lightboxItem);
+          }
         }}
       />
     </div>

@@ -44,6 +44,7 @@ const DEFAULT_OWNER_AD: OwnerAdData = {
 
 export const OwnerSpotlightBanner: React.FC = () => {
   const { language } = useLanguage();
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
   const [adData, setAdData] = useState<OwnerAdData>(() => {
     const saved = localStorage.getItem('oms_owner_exclusive_ad');
     if (saved) {
@@ -208,6 +209,41 @@ export const OwnerSpotlightBanner: React.FC = () => {
   const currentTheme = themeStyles[adData.themeColor] || themeStyles.gold;
   const allPhotos = [adData.imageUrl, ...(adData.galleryImages || [])].filter(Boolean);
 
+  if (isCollapsed) {
+    return (
+      <div className="max-w-7xl mx-auto w-full px-3 sm:px-4 my-2.5 animate-fadeIn">
+        <div className="bg-gradient-to-r from-amber-950/90 via-slate-900 to-amber-950/90 border border-amber-500/50 rounded-2xl p-2.5 sm:p-3 px-3.5 flex items-center justify-between gap-2 shadow-xl backdrop-blur-md">
+          <div className="flex items-center gap-2.5 truncate">
+            <span className="p-2 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/40 shrink-0">
+              <Crown className="w-4 h-4 text-amber-400 animate-pulse" />
+            </span>
+            <div className="truncate text-right dir-rtl">
+              <p className="text-xs sm:text-sm font-black text-amber-200 truncate flex items-center gap-1.5">
+                <span>{adData.badgeText}</span>
+                <span className="text-[10px] bg-amber-400 text-slate-950 font-black px-1.5 py-0.2 rounded-full font-mono">
+                  ${adData.priceUSD}
+                </span>
+              </p>
+              <p className="text-[10.5px] text-slate-300 truncate">
+                {adData.title}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => setIsCollapsed(false)}
+              className="px-3 py-1.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 rounded-xl text-xs font-black transition-all shadow-md active:scale-95 cursor-pointer flex items-center gap-1"
+            >
+              <Sparkles className="w-3.5 h-3.5 fill-slate-950" />
+              <span>{language === 'ar' ? 'معاينة العرض 🏰' : 'View Banner'}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto w-full px-4 my-4 animate-fadeIn">
       {/* Exclusive Container */}
@@ -228,18 +264,29 @@ export const OwnerSpotlightBanner: React.FC = () => {
             </span>
           </div>
 
-          <button
-            onClick={() => {
-              setFormData(adData);
-              setGalleryInput((adData.galleryImages || []).join('\n'));
-              setIsEditModalOpen(true);
-            }}
-            className="py-1.5 px-3 bg-slate-950/90 hover:bg-slate-900 border border-amber-400/50 hover:border-amber-300 text-amber-300 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
-            title={language === 'ar' ? 'تعديل وتحديث المساحة الخاصة' : 'Edit owner space'}
-          >
-            <Edit3 className="w-3.5 h-3.5 text-amber-400" />
-            <span className="hidden sm:inline">{language === 'ar' ? 'تعديل المساحة والمحتوى' : 'Edit Content'}</span>
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => {
+                setFormData(adData);
+                setGalleryInput((adData.galleryImages || []).join('\n'));
+                setIsEditModalOpen(true);
+              }}
+              className="py-1.5 px-3 bg-slate-950/90 hover:bg-slate-900 border border-amber-400/50 hover:border-amber-300 text-amber-300 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
+              title={language === 'ar' ? 'تعديل وتحديث المساحة الخاصة' : 'Edit owner space'}
+            >
+              <Edit3 className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden sm:inline">{language === 'ar' ? 'تعديل' : 'Edit'}</span>
+            </button>
+
+            <button
+              onClick={() => setIsCollapsed(true)}
+              className="py-1.5 px-3 bg-slate-950/90 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-bold flex items-center gap-1 transition-all shadow-md cursor-pointer"
+              title={language === 'ar' ? 'تصغير العرض' : 'Collapse banner'}
+            >
+              <X className="w-3.5 h-3.5 text-slate-400" />
+              <span className="hidden sm:inline">{language === 'ar' ? 'تصغير' : 'Collapse'}</span>
+            </button>
+          </div>
         </div>
 
         {/* Content Body: Media + Exposed Photo Gallery + Details */}

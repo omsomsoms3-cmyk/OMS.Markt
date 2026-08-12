@@ -66,9 +66,9 @@ export const ListingFilterChips: React.FC<ListingFilterChipsProps> = ({
   ];
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-emerald-500/25 dark:border-slate-800 rounded-2xl shadow-sm text-slate-900 dark:text-slate-100 overflow-hidden transition-all duration-300">
+    <div className="bg-transparent text-slate-900 dark:text-slate-100 overflow-hidden transition-all duration-300">
       {/* Super Slim Merged Filter Bar Header */}
-      <div className="flex items-center justify-between gap-2 px-3 py-1.5 bg-slate-50 dark:bg-slate-950/80 border-b border-slate-200/80 dark:border-slate-800/80 text-xs">
+      <div className="flex items-center justify-between gap-2 px-1 py-1 bg-transparent text-xs">
         {/* Left Badge & Title */}
         <div className="flex items-center gap-1.5 shrink-0">
           <div className="p-1 bg-amber-500/15 text-amber-500 border border-amber-500/30 rounded-lg flex items-center justify-center">

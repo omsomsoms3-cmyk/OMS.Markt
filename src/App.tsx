@@ -33,6 +33,7 @@ import { FCMNotificationModal } from './components/FCMNotificationModal';
 import { NotificationToast } from './components/NotificationToast';
 import { AppModeModal } from './components/AppModeModal';
 import { AppTourModal } from './components/AppTourModal';
+import { InstallGuideModal } from './components/InstallGuideModal';
 import { BottomNavBar } from './components/BottomNavBar';
 import { initFirebaseMessaging, setupFCMForegroundListener, subscribeToNotificationAlerts, FCMNotification } from './lib/messaging';
 import { PlusCircle, Sparkles, Home, Zap } from 'lucide-react';
@@ -50,6 +51,7 @@ function MainAppContent() {
   const [isFCMNotificationsOpen, setIsFCMNotificationsOpen] = useState(false);
   const [isAppModeModalOpen, setIsAppModeModalOpen] = useState(false);
   const [isTourOpen, setIsTourOpen] = useState(false);
+  const [isInstallGuideOpen, setIsInstallGuideOpen] = useState(false);
   const [notifications, setNotifications] = useState<FCMNotification[]>([]);
   const [activeToast, setActiveToast] = useState<FCMNotification | null>(null);
   const { isLoggedIn: isAuthLoggedIn, userEmail: authEmail, logout } = useAuth();
@@ -110,7 +112,9 @@ function MainAppContent() {
       <OfflineStatusBanner />
 
       {/* Top Google Play App Banner (Pro Tech Mode) */}
-      {appMode === 'advanced' && <PlayStoreBanner />}
+      {appMode === 'advanced' && (
+        <PlayStoreBanner onOpenInstallGuide={() => setIsInstallGuideOpen(true)} />
+      )}
 
       {/* Real-time Notification Toast Alert */}
       <NotificationToast
@@ -136,6 +140,7 @@ function MainAppContent() {
         onOpenIntegrations={() => setIsIntegrationsOpen(true)}
         onOpenAppModeModal={() => setIsAppModeModalOpen(true)}
         onOpenTour={() => setIsTourOpen(true)}
+        onOpenInstallGuide={() => setIsInstallGuideOpen(true)}
         unreadNotificationsCount={unreadCount}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
@@ -195,7 +200,7 @@ function MainAppContent() {
         {activeTab === 'embed' && <NetlifyEmbed />}
         {activeTab === 'currency' && <CurrencySection />}
         {activeTab === 'realestate' && <RealEstateSection searchQuery={searchQuery} />}
-        {activeTab === 'cars' && <CarsSection searchQuery={searchQuery} />}
+        {activeTab === 'cars' && <CarsSection searchQuery={searchQuery} onSelectTab={(tab) => setActiveTab(tab)} />}
         {activeTab === 'jobs' && <JobsSection searchQuery={searchQuery} />}
         {activeTab === 'saved' && <SavedListingsSection />}
         {activeTab === 'taxidelivery' && <TaxiDeliverySection searchQuery={searchQuery} />}
@@ -227,6 +232,13 @@ function MainAppContent() {
         onOpenAutoCleanup={() => setIsAutoCleanupOpen(true)}
         onOpenIntegrations={() => setIsIntegrationsOpen(true)}
         onOpenTour={() => setIsTourOpen(true)}
+        onOpenInstallGuide={() => setIsInstallGuideOpen(true)}
+      />
+
+      {/* Visual PWA Installation Guide Modal */}
+      <InstallGuideModal
+        isOpen={isInstallGuideOpen}
+        onClose={() => setIsInstallGuideOpen(false)}
       />
 
       {/* Interactive Onboarding App Tour Modal */}
