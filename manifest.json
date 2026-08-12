@@ -1,0 +1,16 @@
+{
+  "name": "OMS الأسواق السورية",
+  "short_name": "OMS",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "description": "تطبيق خاص بالسوق السوري الجديد التطبيق شامل لكل الأسواق السورية",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
