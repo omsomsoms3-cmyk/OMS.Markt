@@ -8,7 +8,7 @@
   "description": "تطبيق خاص بالسوق السوري الجديد التطبيق شامل لكل الأسواق السورية",
   "icons": [
     {
-      "src": "/icon.png",
+      "src": "/icon.png_png",
       "sizes": "512x512",
       "type": "image/png"
     }
