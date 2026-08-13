@@ -155,7 +155,45 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({ isOpen, on
             </div>
           )}
 
-          {/* OS Platform Switcher Tabs */}
+          {/* Iframe Warning & Direct Launch Section */}
+          {typeof window !== 'undefined' && window.self !== window.top && (
+            <div className="bg-amber-500/15 border border-amber-500/40 rounded-2xl p-4 text-xs space-y-3">
+              <div className="flex items-start gap-2 text-amber-300">
+                <ExternalLink className="w-5 h-5 shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-extrabold text-amber-200">
+                    {language === 'ar' ? 'تتصفح التطبيق من داخل نافذة معاينة مغلقة؟' : 'Browsing inside preview iframe?'}
+                  </h4>
+                  <p className="text-slate-300 text-[11px] mt-1 leading-relaxed">
+                    {language === 'ar' ? 'لتفعيل زر التثبيت والتنزيل المباشر على هاتفك بدون قيود المتصفح، افتح التطبيق في نافذة خاريجية أو انسخ الرابط المباشر:' : 'To enable direct installation and file downloads on your phone, open the app in a new window or copy the link:'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => window.open(window.location.href, '_blank')}
+                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  <span>{language === 'ar' ? 'افتح في نافذة جديدة مباشرة 🚀' : 'Open in New Tab 🚀'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(window.location.href);
+                    alert(language === 'ar' ? 'تم نسخ رابط التطبيق المباشر! افتحه في متصفح Chrome أو Safari للتثبيت.' : 'App link copied to clipboard!');
+                  }}
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs flex items-center gap-1.5 border border-slate-700 transition-all active:scale-95 cursor-pointer"
+                >
+                  <Share2 className="w-4 h-4 text-emerald-400" />
+                  <span>{language === 'ar' ? 'نسخ الرابط المباشر 📋' : 'Copy Direct Link'}</span>
+                </button>
+              </div>
+            </div>
+          )}
           <div className="space-y-2">
             <label className="text-xs font-extrabold text-slate-300 uppercase tracking-wider block">
               {language === 'ar' ? 'اختر نظام تشغيل هاتفك أو جهازك:' : 'Select your OS or Device:'}

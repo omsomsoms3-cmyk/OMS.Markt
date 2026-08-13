@@ -4,6 +4,7 @@ import { initialCurrencyRates, initialGoldRates } from '../data/mockData';
 import { useLanguage } from '../context/LanguageContext';
 import { TrendingUp, RefreshCw, Calculator, DollarSign, Award, Clock, ArrowUpRight, ArrowDownRight, Bell, Volume2, Sparkles, X, Check, ShieldAlert, Building2, Globe2, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { RateAlertsModal } from './RateAlertsModal';
+import { CurrencyCalculator } from './CurrencyCalculator';
 import { fetchLiveExchangeData, ExtendedCurrencyRate } from '../lib/exchangeRateService';
 
 const DEFAULT_ALERTS: RateAlert[] = [
@@ -36,6 +37,12 @@ export const CurrencySection: React.FC = () => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncText, setLastSyncText] = useState('مباشر الآن');
   const [officialCBSData, setOfficialCBSData] = useState({ buy: 13500, sell: 13635 });
+  const [globalRatesUSD, setGlobalRatesUSD] = useState<Record<string, number>>({
+    EUR: 0.92,
+    SAR: 3.75,
+    TRY: 33.20,
+    AED: 3.67,
+  });
 
   // Rate Alerts State
   const [alerts, setAlerts] = useState<RateAlert[]>(() => {
@@ -74,6 +81,9 @@ export const CurrencySection: React.FC = () => {
       setGolds(data.golds);
       setLastSyncText(data.lastUpdatedText);
       setOfficialCBSData(data.officialCBSRate);
+      if (data.globalRatesUSD) {
+        setGlobalRatesUSD(data.globalRatesUSD);
+      }
     } catch (err) {
       console.error('Failed to sync live exchange rates:', err);
     } finally {
@@ -181,15 +191,6 @@ export const CurrencySection: React.FC = () => {
       }
     }
   };
-
-  // Currency Converter state
-  const [calcAmountUSD, setCalcAmountUSD] = useState<number>(100);
-  const [calcCityRate, setCalcCityRate] = useState<number>(14950);
-  const calculatedSYP = calcAmountUSD * calcCityRate;
-
-  // Reverse calculator (SYP to USD)
-  const [calcAmountSYP, setCalcAmountSYP] = useState<number>(1500000);
-  const calculatedUSD = (calcAmountSYP / calcCityRate).toFixed(2);
 
   const handleRefreshRates = () => {
     loadLiveRates();
@@ -345,9 +346,20 @@ export const CurrencySection: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
+      {/* Live Interactive Currency Calculator Widget */}
+      <CurrencyCalculator
+        rates={rates}
+        golds={golds}
+        officialCBS={officialCBSData}
+        globalRatesUSD={globalRatesUSD}
+        onRefreshRates={handleRefreshRates}
+        isSyncing={isSyncing}
+      />
+
+      {/* Currencies & Gold Live Rate Cards */}
+      <div className="space-y-6">
         {/* Currencies Grid */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
               <DollarSign className="w-5 h-5 text-emerald-400" />
@@ -356,11 +368,11 @@ export const CurrencySection: React.FC = () => {
             <span className="text-xs text-slate-400">{t('lastUpdate')}: {language === 'ar' ? 'مباشر الآن' : 'Live'}</span>
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {rates.map((rate, idx) => (
               <div
                 key={idx}
-                className="bg-slate-800/90 border border-slate-700/80 rounded-xl p-4 shadow-md hover:border-emerald-500/50 transition-all space-y-3"
+                className="bg-slate-800/90 border border-slate-700/80 rounded-2xl p-4 shadow-md hover:border-emerald-500/50 transition-all space-y-3"
               >
                 <div className="flex items-center justify-between border-b border-slate-700/60 pb-2">
                   <span className="font-bold text-white text-base">{rate.city}</span>
@@ -373,7 +385,7 @@ export const CurrencySection: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-center dir-ltr">
-                  <div className="bg-slate-900/80 p-2 rounded-lg border border-slate-700/50">
+                  <div className="bg-slate-900/80 p-2.5 rounded-xl border border-slate-700/50">
                     <span className="text-[10px] text-slate-400 block">{t('buy')}</span>
                     <span className="text-lg font-black text-emerald-400 font-mono">
                       {rate.buy.toLocaleString()}
@@ -381,7 +393,7 @@ export const CurrencySection: React.FC = () => {
                     <span className="text-[10px] text-slate-500 mr-1">{t('syp')}</span>
                   </div>
 
-                  <div className="bg-slate-900/80 p-2 rounded-lg border border-slate-700/50">
+                  <div className="bg-slate-900/80 p-2.5 rounded-xl border border-slate-700/50">
                     <span className="text-[10px] text-slate-400 block">{t('sell')}</span>
                     <span className="text-lg font-black text-indigo-400 font-mono">
                       {rate.sell.toLocaleString()}
@@ -398,7 +410,7 @@ export const CurrencySection: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setIsAlertsModalOpen(true)}
-                    className="text-amber-400 hover:text-amber-300 font-medium text-[10px] flex items-center gap-1"
+                    className="text-amber-400 hover:text-amber-300 font-medium text-[10px] flex items-center gap-1 cursor-pointer"
                   >
                     <Bell className="w-3 h-3" />
                     <span>{language === 'ar' ? 'تنبيه لهذا السعر' : 'Alert for rate'}</span>
@@ -415,9 +427,9 @@ export const CurrencySection: React.FC = () => {
               <span>{t('goldPrices')}</span>
             </h3>
 
-            <div className="grid sm:grid-cols-2 gap-3">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {golds.map((g, idx) => (
-                <div key={idx} className="bg-slate-800/80 border border-amber-500/20 p-3.5 rounded-xl flex items-center justify-between">
+                <div key={idx} className="bg-slate-800/80 border border-amber-500/20 p-3.5 rounded-2xl flex items-center justify-between">
                   <div>
                     <span className="text-sm font-bold text-white block">{g.karat}</span>
                     <span className="text-xs text-slate-400">{g.updatedAt}</span>
@@ -430,73 +442,6 @@ export const CurrencySection: React.FC = () => {
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Currency Calculator Sidebar */}
-        <div className="space-y-4">
-          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl space-y-4">
-            <div className="flex items-center space-x-2 space-x-reverse text-indigo-400 font-bold border-b border-slate-700/80 pb-3">
-              <Calculator className="w-5 h-5" />
-              <h3 className="text-base text-white">{t('converterTitle')}</h3>
-            </div>
-
-            {/* USD to SYP */}
-            <div className="space-y-3">
-              <label className="text-xs text-slate-300 font-medium block">{t('city')}</label>
-              <select
-                value={calcCityRate}
-                onChange={(e) => setCalcCityRate(Number(e.target.value))}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:ring-2 focus:ring-indigo-500"
-              >
-                {rates.map((r, i) => (
-                  <option key={i} value={r.sell}>
-                    {r.city} - {t('sell')}: {r.sell.toLocaleString()} {t('syp')}
-                  </option>
-                ))}
-              </select>
-
-              <div className="space-y-1">
-                <label className="text-xs text-slate-400 block">{t('amount')} ($ USD)</label>
-                <input
-                  type="number"
-                  value={calcAmountUSD}
-                  onChange={(e) => setCalcAmountUSD(Number(e.target.value))}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm font-mono text-white text-left dir-ltr"
-                />
-              </div>
-
-              <div className="bg-slate-950 p-4 rounded-xl border border-emerald-500/30 text-center">
-                <span className="text-xs text-slate-400 block mb-1">{t('result')} ({t('syp')})</span>
-                <span className="text-2xl font-black text-emerald-400 font-mono dir-ltr block">
-                  {calculatedSYP.toLocaleString()}
-                </span>
-                <span className="text-xs text-slate-400">{t('syp')}</span>
-              </div>
-            </div>
-
-            <hr className="border-slate-700/60" />
-
-            {/* SYP to USD */}
-            <div className="space-y-3">
-              <div className="space-y-1">
-                <label className="text-xs text-slate-400 block">{t('amount')} ({t('syp')})</label>
-                <input
-                  type="number"
-                  value={calcAmountSYP}
-                  onChange={(e) => setCalcAmountSYP(Number(e.target.value))}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm font-mono text-white text-left dir-ltr"
-                />
-              </div>
-
-              <div className="bg-slate-950 p-4 rounded-xl border border-indigo-500/30 text-center">
-                <span className="text-xs text-slate-400 block mb-1">{t('result')} (USD $)</span>
-                <span className="text-2xl font-black text-indigo-400 font-mono dir-ltr block">
-                  ${calculatedUSD}
-                </span>
-                <span className="text-xs text-slate-400">USD</span>
-              </div>
             </div>
           </div>
         </div>
