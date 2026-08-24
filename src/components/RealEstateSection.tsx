@@ -27,9 +27,10 @@ import { InfiniteScrollLoader } from './InfiniteScrollLoader';
 
 interface RealEstateSectionProps {
   searchQuery?: string;
+  initialFilterType?: 'all' | 'sale' | 'rent';
 }
 
-export const RealEstateSection: React.FC<RealEstateSectionProps> = ({ searchQuery = '' }) => {
+export const RealEstateSection: React.FC<RealEstateSectionProps> = ({ searchQuery = '', initialFilterType = 'all' }) => {
   const { language } = useLanguage();
   const { isPostDeleted } = useReports();
   const { isBookmarked, toggleBookmark } = useBookmarks();
@@ -43,7 +44,13 @@ export const RealEstateSection: React.FC<RealEstateSectionProps> = ({ searchQuer
   }, []);
   
   // Filtering & Sorting State
-  const [filterType, setFilterType] = useState<'all' | 'sale' | 'rent'>('all');
+  const [filterType, setFilterType] = useState<'all' | 'sale' | 'rent'>(initialFilterType);
+
+  useEffect(() => {
+    if (initialFilterType) {
+      setFilterType(initialFilterType);
+    }
+  }, [initialFilterType]);
   const [filterCategory, setFilterCategory] = useState<'all' | 'apartment' | 'house' | 'shop' | 'land' | 'hotel' | 'furnished_room' | 'farm' | 'chalet'>('all');
   const [filterCity, setFilterCity] = useState<string>('all');
   const [filterArea, setFilterArea] = useState<string>('');

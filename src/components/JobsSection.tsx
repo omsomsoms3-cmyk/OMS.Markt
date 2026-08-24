@@ -18,9 +18,10 @@ import { InfiniteScrollLoader } from './InfiniteScrollLoader';
 
 interface JobsSectionProps {
   searchQuery?: string;
+  initialCategory?: string;
 }
 
-export const JobsSection: React.FC<JobsSectionProps> = ({ searchQuery = '' }) => {
+export const JobsSection: React.FC<JobsSectionProps> = ({ searchQuery = '', initialCategory = 'all' }) => {
   const { language } = useLanguage();
   const { isPostDeleted } = useReports();
   const { isBookmarked, toggleBookmark } = useBookmarks();
@@ -36,7 +37,13 @@ export const JobsSection: React.FC<JobsSectionProps> = ({ searchQuery = '' }) =>
   }, []);
 
   // Filter & Sort state
-  const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [filterCategory, setFilterCategory] = useState<string>(initialCategory);
+
+  useEffect(() => {
+    if (initialCategory) {
+      setFilterCategory(initialCategory);
+    }
+  }, [initialCategory]);
   const [filterType, setFilterType] = useState<string>('all');
   const [filterCity, setFilterCity] = useState<string>('all');
   const [minSalaryUSD, setMinSalaryUSD] = useState<string>('');

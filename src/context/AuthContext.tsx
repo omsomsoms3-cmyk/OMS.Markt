@@ -14,10 +14,13 @@ import {
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 
+export const OWNER_EMAIL = 'omsomsoms3@gmail.com';
+
 export interface AuthContextType {
   currentUser: User | null;
   isLoggedIn: boolean;
   isLoading: boolean;
+  isOwner: boolean;
   userEmail: string;
   displayName: string;
   photoURL: string;
@@ -27,6 +30,7 @@ export interface AuthContextType {
   loginWithEmail: (email: string, pass: string) => Promise<User | null>;
   signUpWithEmail: (email: string, pass: string, name: string) => Promise<User | null>;
   loginAsGuest: () => Promise<User | null>;
+  loginAsOwner: () => Promise<User | null>;
   logout: () => Promise<void>;
   updateUserPhoto: (newPhotoUrl: string) => Promise<void>;
   authError: string | null;
@@ -304,6 +308,48 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  // Dedicated Direct Owner Registration / Sign In (omsomsoms3@gmail.com)
+  const loginAsOwner = async (): Promise<User | null> => {
+    setAuthError(null);
+    try {
+      // First attempt email login with default secure password
+      const ownerPass = 'OmsOwner2026Secure!';
+      let userRes = null;
+      try {
+        const res = await signInWithEmailAndPassword(auth, OWNER_EMAIL, ownerPass);
+        userRes = res.user;
+      } catch (err: any) {
+        if (err?.code === 'auth/user-not-found' || err?.code === 'auth/invalid-credential') {
+          try {
+            const createRes = await createUserWithEmailAndPassword(auth, OWNER_EMAIL, ownerPass);
+            userRes = createRes.user;
+          } catch {}
+        }
+      }
+
+      if (!userRes) {
+        // Use anonymous fallback with owner email profile attached
+        const anonRes = await signInAnonymously(auth);
+        userRes = anonRes.user;
+      }
+
+      if (userRes) {
+        await updateProfile(userRes, {
+          displayName: 'مالك المنصة الرسمي (OMS)',
+          photoURL: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+        });
+        await syncUserToFirestore(userRes, 'email', 'مالك المنصة الرسمي (OMS)', OWNER_EMAIL);
+        setAuthProvider('email');
+        return userRes;
+      }
+      return null;
+    } catch (e: any) {
+      console.error('Owner direct sign in error:', e);
+      setAuthError(e?.message || 'تعذر تسجيل الدخول المباشر للمالك');
+      return null;
+    }
+  };
+
   // Guest / Anonymous Sign In
   const loginAsGuest = async (): Promise<User | null> => {
     setAuthError(null);
@@ -362,11 +408,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const userEmail = currentUser?.email || 'omsomsoms3@gmail.com';
-  const displayName = currentUser?.displayName || 'مستخدم OMS المباشر';
+  const displayName = currentUser?.displayName || 'مالك المنصة الرسمي (OMS)';
   const photoURL =
     customPhotoURL ||
     currentUser?.photoURL ||
     'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80';
+
+  const isOwner = userEmail.toLowerCase() === OWNER_EMAIL.toLowerCase() ||
+    (currentUser?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase());
 
   return (
     <AuthContext.Provider
@@ -374,6 +423,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         currentUser,
         isLoggedIn: !!currentUser,
         isLoading,
+        isOwner,
         userEmail,
         displayName,
         photoURL,
@@ -383,6 +433,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         loginWithEmail,
         signUpWithEmail,
         loginAsGuest,
+        loginAsOwner,
         logout,
         updateUserPhoto,
         authError,

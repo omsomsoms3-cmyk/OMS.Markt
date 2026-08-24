@@ -2,9 +2,35 @@ import React, { useState, useEffect } from 'react';
 import { CurrencyRate, GoldRate, RateAlert } from '../types';
 import { initialCurrencyRates, initialGoldRates } from '../data/mockData';
 import { useLanguage } from '../context/LanguageContext';
-import { TrendingUp, RefreshCw, Calculator, DollarSign, Award, Clock, ArrowUpRight, ArrowDownRight, Bell, Volume2, Sparkles, X, Check, ShieldAlert, Building2, Globe2, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { 
+  TrendingUp, 
+  RefreshCw, 
+  Calculator, 
+  DollarSign, 
+  Award, 
+  Clock, 
+  ArrowUpRight, 
+  ArrowDownRight, 
+  Bell, 
+  Volume2, 
+  Sparkles, 
+  X, 
+  Check, 
+  ShieldAlert, 
+  Building2, 
+  Globe2, 
+  ShieldCheck, 
+  CheckCircle2,
+  ShoppingBag,
+  Coins,
+  Scale,
+  BadgePercent,
+  Smartphone
+} from 'lucide-react';
 import { RateAlertsModal } from './RateAlertsModal';
 import { CurrencyCalculator } from './CurrencyCalculator';
+import { SyrianGoodsSection } from './SyrianGoodsSection';
+import { MobilePhonesSection } from './MobilePhonesSection';
 import { fetchLiveExchangeData, ExtendedCurrencyRate } from '../lib/exchangeRateService';
 
 const DEFAULT_ALERTS: RateAlert[] = [
@@ -36,6 +62,7 @@ export const CurrencySection: React.FC = () => {
   const [golds, setGolds] = useState<GoldRate[]>(initialGoldRates);
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncText, setLastSyncText] = useState('مباشر الآن');
+  const [activeSubTab, setActiveSubTab] = useState<'all' | 'currencies' | 'gold' | 'goods' | 'phones'>('all');
   const [officialCBSData, setOfficialCBSData] = useState({ buy: 13500, sell: 13635 });
   const [globalRatesUSD, setGlobalRatesUSD] = useState<Record<string, number>>({
     EUR: 0.92,
@@ -214,13 +241,13 @@ export const CurrencySection: React.FC = () => {
                 </span>
                 <span className="inline-flex items-center gap-1 bg-emerald-500/20 text-emerald-300 text-[10px] font-black px-2 py-0.5 rounded-full border border-emerald-500/40">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                  {language === 'ar' ? 'ربط موثق وحي' : 'Verified Live'}
+                  {language === 'ar' ? 'تحديث يومي حي' : 'Daily Live Updates'}
                 </span>
               </div>
               <p className="text-slate-400 text-[11px] mt-0.5">
                 {language === 'ar'
-                  ? 'يتم جلب البيانات وتدقيقها عبر شبكة نشرات المصرف المركزي السوري ومؤشرات فوركس وأسواق المعادن العالمية (Open Forex Network).'
-                  : 'Data synced via Syrian Central Bank bulletins and Open Forex & Gold Spot API.'}
+                  ? 'يتم جلب البيانات وتدقيقها عبر شبكة نشرات المصرف المركزي السوري، جمعية الصاغة بدمشق، وبورصة السلع والمنتجات السورية.'
+                  : 'Data synced via Syrian Central Bank, Damascus Goldsmith Association, and Syrian Commodities exchange.'}
               </p>
             </div>
           </div>
@@ -233,13 +260,13 @@ export const CurrencySection: React.FC = () => {
         </div>
 
         {/* Network Badges */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
           {/* Badge 1: Central Bank of Syria */}
           <div className="p-2.5 bg-slate-950/80 border border-slate-800 rounded-xl flex items-center gap-2.5">
             <Building2 className="w-4 h-4 text-emerald-400 shrink-0" />
             <div className="flex-1 min-w-0">
               <span className="font-extrabold text-slate-200 block text-[11px] truncate">
-                {language === 'ar' ? 'المصرف المركزي السوري (نشرة الحوالات)' : 'Central Bank of Syria (Official)'}
+                {language === 'ar' ? 'المصرف المركزي السوري (الحوالات)' : 'Central Bank of Syria (Official)'}
               </span>
               <span className="text-[10px] text-emerald-400 font-mono font-bold">
                 USD = {officialCBSData.buy.toLocaleString()} / {officialCBSData.sell.toLocaleString()} ل.س
@@ -248,21 +275,36 @@ export const CurrencySection: React.FC = () => {
             <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 ml-auto" />
           </div>
 
-          {/* Badge 2: Open Forex Global API */}
+          {/* Badge 2: Damascus Goldsmiths Association */}
           <div className="p-2.5 bg-slate-950/80 border border-slate-800 rounded-xl flex items-center gap-2.5">
-            <Globe2 className="w-4 h-4 text-sky-400 shrink-0" />
+            <Award className="w-4 h-4 text-amber-400 shrink-0" />
             <div className="flex-1 min-w-0">
               <span className="font-extrabold text-slate-200 block text-[11px] truncate">
-                {language === 'ar' ? 'شبكة فوركس وأسواق المعادن العالمية' : 'Global Open Forex & Gold Spot API'}
+                {language === 'ar' ? 'جمعية الصاغة بدمشق وسوق الذهب' : 'Syrian Gold Market & Association'}
+              </span>
+              <span className="text-[10px] text-amber-400 font-mono font-bold">
+                {language === 'ar' ? 'عيار 21 و18 وليرات الذهب' : '21K, 18K & Gold Coins'}
+              </span>
+            </div>
+            <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 ml-auto" />
+          </div>
+
+          {/* Badge 3: Syrian Goods & Commodity Market */}
+          <div className="p-2.5 bg-slate-950/80 border border-slate-800 rounded-xl flex items-center gap-2.5">
+            <ShoppingBag className="w-4 h-4 text-sky-400 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <span className="font-extrabold text-slate-200 block text-[11px] truncate">
+                {language === 'ar' ? 'بورصة السلع والمنتجات السورية' : 'Syrian Goods & Products Exchange'}
               </span>
               <span className="text-[10px] text-sky-400 font-mono font-bold">
-                {language === 'ar' ? 'أسعار العملات والذهب مباشر' : 'Live Forex & Spot Gold Rates'}
+                {language === 'ar' ? 'أسعار السلع التموينية الحية' : 'Real-time Consumer Goods'}
               </span>
             </div>
             <CheckCircle2 className="w-4 h-4 text-sky-400 shrink-0 ml-auto" />
           </div>
         </div>
       </div>
+
       {/* Triggered Alert Floating Banner */}
       {activeTriggerBanner && (
         <div className="bg-gradient-to-r from-amber-500 via-amber-600 to-amber-500 text-slate-950 p-4 rounded-2xl shadow-2xl border-2 border-amber-300 animate-fadeIn relative flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
@@ -305,15 +347,21 @@ export const CurrencySection: React.FC = () => {
         </div>
       )}
 
-      {/* Header Banner */}
+      {/* Header Banner with Sub-Navigation Buttons */}
       <div className="bg-gradient-to-r from-emerald-950 via-slate-900 to-slate-900 border border-emerald-500/30 rounded-2xl p-6 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center space-x-2 space-x-reverse text-emerald-400 font-bold text-sm mb-1">
             <TrendingUp className="w-5 h-5" />
-            <span>OMS — {t('tabCurrency')}</span>
+            <span>OMS — {language === 'ar' ? 'بورصة أسعار العملات والذهب والسلع السورية' : 'Rates, Gold & Syrian Goods Exchange'}</span>
           </div>
-          <h2 className="text-2xl font-black text-white">{t('currencyTitle')}</h2>
-          <p className="text-xs text-slate-300 mt-1">{t('currencyDesc')}</p>
+          <h2 className="text-2xl font-black text-white">
+            {language === 'ar' ? 'أسعار العملات والذهب والسلع والمنتجات السورية' : 'Syrian Currency, Gold & Product Prices'}
+          </h2>
+          <p className="text-xs text-slate-300 mt-1">
+            {language === 'ar' 
+              ? 'تحديثات يومية مستمرة لأسعار صرف الليرة السورية، غرامات وسبائك الذهب، وقائمة السلع والمنتجات السورية الفعلية'
+              : 'Daily continuous updates for Syrian Pound exchange rates, gold karats & bars, and real market prices for Syrian goods.'}
+          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
@@ -339,26 +387,101 @@ export const CurrencySection: React.FC = () => {
             <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
             <span>
               {isSyncing
-                ? (language === 'ar' ? 'جاري المزامنة...' : 'Syncing...')
+                ? (language === 'ar' ? 'جاري المزامنة اليومية...' : 'Syncing Daily...')
                 : (language === 'ar' ? 'تحديث الأسعار الآن' : 'Refresh Rates Now')}
             </span>
           </button>
         </div>
       </div>
 
-      {/* Live Interactive Currency Calculator Widget */}
-      <CurrencyCalculator
-        rates={rates}
-        golds={golds}
-        officialCBS={officialCBSData}
-        globalRatesUSD={globalRatesUSD}
-        onRefreshRates={handleRefreshRates}
-        isSyncing={isSyncing}
-      />
+      {/* Main Feature Sub-Navigation Tabs */}
+      <div className="flex items-center gap-2 overflow-x-auto scrollbar-none bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800 shadow-inner">
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('all')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer shrink-0 border ${
+            activeSubTab === 'all'
+              ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white border-emerald-400 shadow-md'
+              : 'text-slate-300 hover:bg-slate-800/80 border-transparent'
+          }`}
+        >
+          <Sparkles className="w-4 h-4" />
+          <span>{language === 'ar' ? 'عرض شامل (الكل)' : 'Overview (All)'}</span>
+        </button>
 
-      {/* Currencies & Gold Live Rate Cards */}
-      <div className="space-y-6">
-        {/* Currencies Grid */}
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('goods')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer shrink-0 border ${
+            activeSubTab === 'goods'
+              ? 'bg-gradient-to-r from-sky-600 to-blue-600 text-white border-sky-400 shadow-md'
+              : 'text-slate-300 hover:bg-slate-800/80 border-transparent'
+          }`}
+        >
+          <ShoppingBag className="w-4 h-4 text-sky-300" />
+          <span>{language === 'ar' ? 'أسعار السلع والمنتجات السورية 🛒' : 'Syrian Goods & Commodities 🛒'}</span>
+          <span className="bg-sky-400/20 text-sky-300 text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold">
+            16 سلعة
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('gold')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer shrink-0 border ${
+            activeSubTab === 'gold'
+              ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 border-amber-400 shadow-md'
+              : 'text-slate-300 hover:bg-slate-800/80 border-transparent'
+          }`}
+        >
+          <Award className="w-4 h-4 text-amber-400" />
+          <span>{language === 'ar' ? 'أسعار الذهب اليومية (عيار 21، 18، الليرات) 🪙' : 'Daily Gold & Coins 🪙'}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('currencies')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer shrink-0 border ${
+            activeSubTab === 'currencies'
+              ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white border-indigo-400 shadow-md'
+              : 'text-slate-300 hover:bg-slate-800/80 border-transparent'
+          }`}
+        >
+          <DollarSign className="w-4 h-4 text-indigo-300" />
+          <span>{language === 'ar' ? 'أسعار صرف العملات الأجنبية' : 'Foreign Currencies'}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('phones')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer shrink-0 border ${
+            activeSubTab === 'phones'
+              ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white border-purple-400 shadow-md'
+              : 'text-slate-300 hover:bg-slate-800/80 border-transparent'
+          }`}
+        >
+          <Smartphone className="w-4 h-4 text-purple-300" />
+          <span>{language === 'ar' ? 'أسعار الهواتف والمنتجات (دقيقة بدقيقة) 📱' : 'Phones & Tech (Live) 📱'}</span>
+          <span className="bg-rose-500 text-white text-[10px] px-1.5 py-0.2 rounded-full font-mono font-black animate-pulse">
+            LIVE 🔴
+          </span>
+        </button>
+      </div>
+
+      {/* Live Interactive Currency & Gold Calculator Widget */}
+      {(activeSubTab === 'all' || activeSubTab === 'currencies' || activeSubTab === 'gold') && (
+        <CurrencyCalculator
+          rates={rates}
+          golds={golds}
+          officialCBS={officialCBSData}
+          globalRatesUSD={globalRatesUSD}
+          onRefreshRates={handleRefreshRates}
+          isSyncing={isSyncing}
+        />
+      )}
+
+      {/* Section 1: Currencies Grid */}
+      {(activeSubTab === 'all' || activeSubTab === 'currencies') && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
@@ -419,33 +542,107 @@ export const CurrencySection: React.FC = () => {
               </div>
             ))}
           </div>
+        </div>
+      )}
 
-          {/* Gold Section */}
-          <div className="pt-4 space-y-3">
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              <Award className="w-5 h-5 text-amber-400" />
-              <span>{t('goldPrices')}</span>
-            </h3>
-
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {golds.map((g, idx) => (
-                <div key={idx} className="bg-slate-800/80 border border-amber-500/20 p-3.5 rounded-2xl flex items-center justify-between">
-                  <div>
-                    <span className="text-sm font-bold text-white block">{g.karat}</span>
-                    <span className="text-xs text-slate-400">{g.updatedAt}</span>
-                  </div>
-                  <div className="text-left">
-                    <span className="text-base font-black text-amber-400 font-mono dir-ltr block">
-                      {g.priceSYP.toLocaleString()}
-                    </span>
-                    <span className="text-[10px] text-slate-400">{t('syp')}</span>
-                  </div>
-                </div>
-              ))}
+      {/* Section 2: Comprehensive Daily Gold Rates */}
+      {(activeSubTab === 'all' || activeSubTab === 'gold') && (
+        <div className="space-y-4 pt-2">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+            <div>
+              <h3 className="text-lg font-black text-white flex items-center gap-2">
+                <Award className="w-5 h-5 text-amber-400" />
+                <span>{language === 'ar' ? 'نشرة أسعار الذهب اليومية (جمعية الصاغة وسوق دمشق)' : 'Daily Gold Rates (Goldsmith Association & Market)'}</span>
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                {language === 'ar'
+                  ? 'محدثة يومياً على مدار الساعة حسب تسعيرة جمعية الصاغة وأسعار أونصة الذهب في البورصة العالمية'
+                  : 'Updated daily according to the Goldsmiths Association and London/NY Spot Gold benchmarks.'}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full font-bold">
+                {language === 'ar' ? 'تحديث يومي حي 🟢' : 'Daily Live Gold 🟢'}
+              </span>
             </div>
           </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {golds.map((g, idx) => (
+              <div 
+                key={idx} 
+                className="bg-slate-900/90 border border-amber-500/30 hover:border-amber-400 rounded-2xl p-4 shadow-lg transition-all space-y-3 relative overflow-hidden group"
+              >
+                <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600" />
+                
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <h4 className="text-sm font-black text-white group-hover:text-amber-300 transition-colors">
+                      {g.karat}
+                    </h4>
+                    {g.description && (
+                      <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-1">
+                        {g.description}
+                      </p>
+                    )}
+                  </div>
+                  {g.badge && (
+                    <span className="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full font-extrabold shrink-0">
+                      {g.badge}
+                    </span>
+                  )}
+                </div>
+
+                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1">
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-xs text-slate-400 font-bold">{language === 'ar' ? 'السعر بالليرة:' : 'Price (SYP):'}</span>
+                    <div className="text-left">
+                      <span className="text-xl font-black text-amber-400 font-mono">
+                        {g.priceSYP.toLocaleString()}
+                      </span>
+                      <span className="text-xs text-slate-400 mr-1 font-bold">ل.س</span>
+                    </div>
+                  </div>
+
+                  {g.priceUSD && (
+                    <div className="flex items-center justify-between text-[11px] text-slate-400 border-t border-slate-900 pt-1">
+                      <span>{language === 'ar' ? 'المعادل بالدولار ($):' : 'USD Value ($):'}</span>
+                      <span className="text-sky-300 font-mono font-bold">${g.priceUSD.toLocaleString()} USD</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between text-[10px] text-slate-400">
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-slate-500" />
+                    <span>{g.updatedAt}</span>
+                  </span>
+                  <span className="text-emerald-400 font-bold">
+                    {language === 'ar' ? 'نشرة موثقة ✓' : 'Verified'}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Section 3: Real Syrian Goods & Commodity Prices */}
+      {(activeSubTab === 'all' || activeSubTab === 'goods') && (
+        <div className="pt-2">
+          <SyrianGoodsSection
+            onRefresh={handleRefreshRates}
+            isSyncing={isSyncing}
+          />
+        </div>
+      )}
+
+      {/* Section 4: Live Syrian Mobile Phones & Tech Prices (Minute by Minute) */}
+      {(activeSubTab === 'all' || activeSubTab === 'phones') && (
+        <div className="pt-4">
+          <MobilePhonesSection externalUsdRate={rates[0]?.sell || 14900} />
+        </div>
+      )}
 
       {/* Rate Alerts Modal */}
       <RateAlertsModal
@@ -461,5 +658,6 @@ export const CurrencySection: React.FC = () => {
     </div>
   );
 };
+
 
 

@@ -3,8 +3,9 @@ import { TabType } from '../types';
 import { OmsLogo } from './OmsLogo';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
-import { Globe, TrendingUp, Home, Car, ShoppingBag, Truck, BookOpen, MessageSquare, ExternalLink, Settings, Languages, User, PlusCircle, Search, X, ChevronRight, ChevronDown, SlidersHorizontal, Tag, MapPin, Share2, Briefcase, Flag, ShieldAlert, Sun, Moon, Bell, BellRing, History, Clock, Trash2, Bookmark, Zap, Mic, MicOff, Volume2, QrCode, Building, Compass, HelpCircle, Download } from 'lucide-react';
+import { Globe, TrendingUp, Home, Car, ShoppingBag, Truck, BookOpen, MessageSquare, ExternalLink, Settings, Languages, User, PlusCircle, Search, X, ChevronRight, ChevronDown, SlidersHorizontal, Tag, MapPin, Share2, Briefcase, Flag, ShieldAlert, Sun, Moon, Bell, BellRing, History, Clock, Trash2, Bookmark, Zap, Mic, MicOff, Volume2, QrCode, Building, Compass, HelpCircle, Download, Smartphone, Radio } from 'lucide-react';
 import { initialCarListings, initialRealEstateListings, initialTaxiOrders, initialJobListings } from '../data/mockData';
+import { BASE_MOBILE_PHONES } from '../data/mobilePhonesData';
 import { useReports } from '../context/ReportContext';
 import { useBookmarks } from '../context/BookmarkContext';
 import { useAppMode } from '../context/AppModeContext';
@@ -12,10 +13,13 @@ import { useAuth } from '../context/AuthContext';
 import { AdminReportsModal } from './AdminReportsModal';
 import { QRScannerModal } from './QRScannerModal';
 import { NetworkQualityIndicator } from './NetworkQualityIndicator';
+import { SwipeableCategoryBar, CategoryItemId } from './SwipeableCategoryBar';
 
 interface NavbarProps {
   activeTab: TabType;
   setActiveTab: (tab: TabType) => void;
+  selectedCategory?: CategoryItemId;
+  onSelectCategory?: (categoryId: CategoryItemId, tab: TabType) => void;
   userEmail: string;
   isLoggedIn: boolean;
   onOpenSettings: () => void;
@@ -35,6 +39,8 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({
   activeTab,
   setActiveTab,
+  selectedCategory,
+  onSelectCategory,
   userEmail,
   isLoggedIn,
   onOpenSettings,
@@ -333,15 +339,29 @@ export const Navbar: React.FC<NavbarProps> = ({
       )
     : [];
 
-  const totalMatches = matchedCars.length + matchedRealEstate.length + matchedTaxi.length + matchedJobs.length;
+  const matchedPhones = isSearchActive
+    ? BASE_MOBILE_PHONES.filter(
+        (p) =>
+          !q ||
+          p.modelNameAr.toLowerCase().includes(q) ||
+          p.modelNameEn.toLowerCase().includes(q) ||
+          p.brand.toLowerCase().includes(q) ||
+          p.storage.toLowerCase().includes(q) ||
+          p.warrantyAr.toLowerCase().includes(q)
+      )
+    : [];
+
+  const totalMatches = matchedCars.length + matchedRealEstate.length + matchedTaxi.length + matchedJobs.length + matchedPhones.length;
 
   const allTabs: { id: TabType; label: string; icon: React.ReactNode; badge?: string }[] = [
     { id: 'cars', label: language === 'ar' ? 'الإعلانات الشاملة' : 'Marketplace', icon: <Home className="w-4 h-4 text-emerald-300 drop-shadow-[0_0_6px_rgba(52,211,153,0.8)]" /> },
+    { id: 'phones', label: language === 'ar' ? 'أسعار الهواتف (دقيقة بدقيقة)' : 'Phones & Tech', icon: <Smartphone className="w-4 h-4 text-indigo-300 drop-shadow-[0_0_6px_rgba(165,180,252,0.8)]" />, badge: language === 'ar' ? 'دقيقة بدقيقة 🔴' : 'Live 🔴' },
+    { id: 'currency', label: t('tabCurrency'), icon: <TrendingUp className="w-4 h-4 text-cyan-300 drop-shadow-[0_0_6px_rgba(103,232,249,0.8)]" />, badge: language === 'ar' ? 'يومي حي' : 'Daily' },
+    { id: 'news', label: language === 'ar' ? 'أخبار سانا الرسمية' : 'SANA News', icon: <Radio className="w-4 h-4 text-rose-300 drop-shadow-[0_0_6px_rgba(244,63,94,0.8)]" />, badge: language === 'ar' ? 'ساعة بساعة' : 'Hourly' },
     { id: 'realestate', label: t('tabRealEstate'), icon: <Building className="w-4 h-4 text-sky-300 drop-shadow-[0_0_6px_rgba(56,189,248,0.8)]" /> },
     { id: 'jobs', label: language === 'ar' ? 'فرص العمل والخدمات' : 'Jobs & Services', icon: <Briefcase className="w-4 h-4 text-blue-300 drop-shadow-[0_0_6px_rgba(96,165,250,0.8)]" />, badge: language === 'ar' ? 'جديد 🔥' : 'New 🔥' },
     { id: 'saved', label: language === 'ar' ? 'المحفوظات' : 'Saved', icon: <Bookmark className="w-4 h-4 text-amber-300 drop-shadow-[0_0_6px_rgba(252,211,77,0.8)]" />, badge: bookmarksCount > 0 ? `${bookmarksCount}` : undefined },
     { id: 'taxidelivery', label: t('tabTaxiDelivery'), icon: <Truck className="w-4 h-4 text-yellow-300 drop-shadow-[0_0_6px_rgba(253,224,71,0.8)]" /> },
-    { id: 'currency', label: t('tabCurrency'), icon: <TrendingUp className="w-4 h-4 text-cyan-300 drop-shadow-[0_0_6px_rgba(103,232,249,0.8)]" /> },
     { id: 'embed', label: t('tabEmbed'), icon: <Globe className="w-4 h-4 text-teal-300 drop-shadow-[0_0_6px_rgba(94,234,212,0.8)]" />, badge: t('badgeLive') },
     { id: 'ledger', label: t('tabLedger'), icon: <BookOpen className="w-4 h-4 text-purple-300 drop-shadow-[0_0_6px_rgba(216,180,254,0.8)]" /> },
     { id: 'messages', label: t('tabMessages'), icon: <MessageSquare className="w-4 h-4 text-indigo-300 drop-shadow-[0_0_6px_rgba(165,180,252,0.8)]" /> },
@@ -955,6 +975,53 @@ export const Navbar: React.FC<NavbarProps> = ({
                       ))}
                     </div>
                   )}
+
+                  {/* Section 5: Mobile Phones & Tech Prices (Minute by Minute) */}
+                  {matchedPhones.length > 0 && (
+                    <div className="p-2 space-y-1 bg-slate-900/80 border-t border-slate-800">
+                      <div className="px-2 py-1 text-[10px] font-bold text-indigo-400 uppercase tracking-wider flex items-center justify-between">
+                        <span className="flex items-center gap-1">
+                          <Smartphone className="w-3 h-3 text-indigo-400" />
+                          <span>{language === 'ar' ? 'أسعار الهواتف والمنتجات (دقيقة بدقيقة)' : 'Phones & Tech Live'} ({matchedPhones.length})</span>
+                        </span>
+                        <button
+                          onClick={() => handleResultClick('phones')}
+                          className="hover:underline text-indigo-400 font-bold"
+                        >
+                          {language === 'ar' ? 'عرض الكل 📱' : 'View All'}
+                        </button>
+                      </div>
+
+                      {matchedPhones.slice(0, 3).map((phone) => (
+                        <div
+                          key={phone.id}
+                          onClick={() => handleResultClick('phones')}
+                          className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-800 cursor-pointer transition-colors group"
+                        >
+                          <div className="flex items-center gap-2.5 overflow-hidden">
+                            <img
+                              src={phone.image}
+                              alt={phone.modelNameAr}
+                              className="w-9 h-9 object-cover rounded-lg border border-slate-700 shrink-0"
+                            />
+                            <div className="truncate">
+                              <p className="font-bold text-slate-100 truncate group-hover:text-indigo-300 transition-colors">
+                                {language === 'ar' ? phone.modelNameAr : phone.modelNameEn}
+                              </p>
+                              <p className="text-[10px] text-slate-400">
+                                {phone.brand} • {phone.storage} • {phone.ram}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="text-left shrink-0 font-mono">
+                            <span className="text-indigo-400 font-bold block">${phone.priceUSD}</span>
+                            <span className="text-[9px] text-emerald-400 block">{phone.customsTier}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -1310,50 +1377,13 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
-      {/* Sleek Slim Horizontal Category Navigation Bar with Gold Divider & Accents */}
-      <div className="bg-slate-950/95 border-t border-amber-500/30 px-2 sm:px-4 py-1">
-        <div className="max-w-7xl mx-auto flex items-center justify-start gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none py-0.5">
-          {tabs.map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl transition-all cursor-pointer group shrink-0 ${
-                  isActive
-                    ? 'bg-amber-500/20 text-amber-300 border border-amber-400/80 shadow-xs shadow-amber-500/20 font-extrabold'
-                    : 'bg-slate-900/90 hover:bg-slate-800 text-slate-300 border border-amber-500/20 hover:border-amber-500/40 font-medium'
-                }`}
-              >
-                <div className={`w-6 h-6 rounded-lg flex items-center justify-center relative shrink-0 transition-transform group-hover:scale-110 ${
-                  isActive
-                    ? 'bg-amber-400 text-slate-950 shadow-xs'
-                    : 'bg-slate-800 text-amber-400 group-hover:bg-slate-700'
-                }`}>
-                  {React.cloneElement(tab.icon as React.ReactElement, {
-                    className: `w-3.5 h-3.5 ${isActive ? 'text-slate-950 stroke-[2.2]' : 'text-amber-400'}`
-                  })}
-                  {tab.id === 'saved' && bookmarksCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-amber-500 text-slate-950 font-black text-[8px] min-w-[13px] h-3.5 px-0.5 rounded-full flex items-center justify-center shadow-xs border border-slate-950 animate-pulse">
-                      {bookmarksCount}
-                    </span>
-                  )}
-                </div>
-                <span className="text-[11px] whitespace-nowrap leading-none font-bold">
-                  {tab.label}
-                </span>
-                {tab.badge && tab.id !== 'saved' && (
-                  <span className={`text-[8.5px] px-1.5 py-0.2 rounded-full font-bold ${
-                    isActive ? 'bg-amber-400 text-slate-950 font-black' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                  }`}>
-                    {tab.badge}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      {/* Swipeable & Horizontally Scrollable Category Bar with Left/Right arrows & touch drag */}
+      <SwipeableCategoryBar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        selectedSubCategory={selectedCategory}
+        onSelectCategory={onSelectCategory}
+      />
 
       {/* Admin Reports Modal */}
       <AdminReportsModal

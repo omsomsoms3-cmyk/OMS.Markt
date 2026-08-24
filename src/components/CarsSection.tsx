@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CarListing, TabType } from '../types';
 import { initialCarListings } from '../data/mockData';
 import { subscribeToListings } from '../lib/listingsService';
-import { ShoppingBag, Plus, Phone, MapPin, Calendar, Tag, Wrench, Car as CarIcon, Laptop, Home, CreditCard, ShieldCheck, Filter, ArrowUpDown, RefreshCw, X, Share2, Flag, Crown, Star, Trash2, Bookmark, BookmarkCheck, Globe, QrCode, ChevronDown, ChevronUp, MoreHorizontal, ZoomIn, Maximize2, Sparkles, Building, Briefcase, Truck } from 'lucide-react';
+import { ShoppingBag, Plus, Phone, MapPin, Calendar, Tag, Wrench, Car as CarIcon, Laptop, Home, CreditCard, ShieldCheck, Filter, ArrowUpDown, RefreshCw, X, Share2, Flag, Crown, Star, Trash2, Bookmark, BookmarkCheck, Globe, QrCode, ChevronDown, ChevronUp, MoreHorizontal, ZoomIn, Maximize2, Sparkles, Building, Briefcase, Truck, Smartphone } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAppMode } from '../context/AppModeContext';
 import { PaymentModal, PaymentItemDetails } from './PaymentModal';
@@ -50,7 +50,7 @@ export const CarsSection: React.FC<CarsSectionProps> = ({ searchQuery = '', onSe
     return () => unsubscribe();
   }, []);
   const [filterCondition, setFilterCondition] = useState<'all' | 'new' | 'used'>('all');
-  const [filterCategory, setFilterCategory] = useState<'all' | 'tools' | 'appliances' | 'electronics' | 'car'>('all');
+  const [filterCategory, setFilterCategory] = useState<'all' | 'mobile' | 'tools' | 'appliances' | 'electronics' | 'car'>('all');
   
   // Sorting & Advanced Filter State
   const [sortOption, setSortOption] = useState<'default' | 'price_asc' | 'price_desc' | 'newest' | 'oldest'>('default');
@@ -196,7 +196,10 @@ export const CarsSection: React.FC<CarsSectionProps> = ({ searchQuery = '', onSe
     .filter((item) => {
       if (isPostDeleted(item.id)) return false;
       const matchesCondition = filterCondition === 'all' || item.condition === filterCondition;
-      const matchesCategory = filterCategory === 'all' || item.category === filterCategory;
+      const matchesCategory =
+        filterCategory === 'all' ||
+        item.category === filterCategory ||
+        (filterCategory === 'mobile' && (item.category === 'mobile' || item.category === 'phones'));
       const matchesCity = filterCity === 'all' || 
         item.city.toLowerCase().includes(filterCity.toLowerCase()) || 
         filterCity.toLowerCase().includes(item.city.toLowerCase());
@@ -306,27 +309,15 @@ export const CarsSection: React.FC<CarsSectionProps> = ({ searchQuery = '', onSe
             </button>
 
             <button
-              onClick={() => setFilterCategory('tools')}
+              onClick={() => setFilterCategory('mobile')}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
-                filterCategory === 'tools'
+                filterCategory === 'mobile'
                   ? 'bg-amber-500 text-slate-950 font-black shadow'
                   : 'bg-slate-950/80 text-slate-300 hover:bg-slate-800 border border-slate-800'
               }`}
             >
-              <Wrench className="w-3.5 h-3.5" />
-              <span>{language === 'ar' ? 'أدوات صيانة' : 'Tools'}</span>
-            </button>
-
-            <button
-              onClick={() => setFilterCategory('appliances')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
-                filterCategory === 'appliances'
-                  ? 'bg-amber-500 text-slate-950 font-black shadow'
-                  : 'bg-slate-950/80 text-slate-300 hover:bg-slate-800 border border-slate-800'
-              }`}
-            >
-              <Home className="w-3.5 h-3.5" />
-              <span>{language === 'ar' ? 'أجهزة منزلية' : 'Appliances'}</span>
+              <Smartphone className="w-3.5 h-3.5" />
+              <span>{language === 'ar' ? 'موبايلات وهواتف' : 'Phones & Mobiles'}</span>
             </button>
 
             <button
@@ -351,6 +342,30 @@ export const CarsSection: React.FC<CarsSectionProps> = ({ searchQuery = '', onSe
             >
               <CarIcon className="w-3.5 h-3.5" />
               <span>{language === 'ar' ? 'سيارات' : 'Cars'}</span>
+            </button>
+
+            <button
+              onClick={() => setFilterCategory('tools')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                filterCategory === 'tools'
+                  ? 'bg-amber-500 text-slate-950 font-black shadow'
+                  : 'bg-slate-950/80 text-slate-300 hover:bg-slate-800 border border-slate-800'
+              }`}
+            >
+              <Wrench className="w-3.5 h-3.5" />
+              <span>{language === 'ar' ? 'أدوات صيانة' : 'Tools'}</span>
+            </button>
+
+            <button
+              onClick={() => setFilterCategory('appliances')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                filterCategory === 'appliances'
+                  ? 'bg-amber-500 text-slate-950 font-black shadow'
+                  : 'bg-slate-950/80 text-slate-300 hover:bg-slate-800 border border-slate-800'
+              }`}
+            >
+              <Home className="w-3.5 h-3.5" />
+              <span>{language === 'ar' ? 'أجهزة منزلية' : 'Appliances'}</span>
             </button>
           </div>
 
@@ -649,15 +664,30 @@ export const CarsSection: React.FC<CarsSectionProps> = ({ searchQuery = '', onSe
                   {item.title}
                 </h3>
 
-                {/* Specs Chips (Year, Make, Mileage) */}
-                {(item.year || item.make || (item.mileage !== undefined && item.mileage > 0)) && (
+                {/* Specs Chips (Year, Make, Mileage, Storage, RAM, Customs) */}
+                {(item.year || item.make || (item.mileage !== undefined && item.mileage > 0) || item.storage || item.ram || item.customsStatus) && (
                   <div className="flex flex-wrap items-center gap-1 pt-0.5">
+                    {item.storage && (
+                      <span className="bg-indigo-950/80 text-indigo-300 text-[10px] px-1.5 py-0.5 rounded-md border border-indigo-700/80 font-mono font-bold">
+                        💾 {item.storage}
+                      </span>
+                    )}
+                    {item.ram && (
+                      <span className="bg-purple-950/80 text-purple-300 text-[10px] px-1.5 py-0.5 rounded-md border border-purple-700/80 font-mono">
+                        ⚡️ {item.ram}
+                      </span>
+                    )}
+                    {item.customsStatus === 'official' && (
+                      <span className="bg-emerald-950/80 text-emerald-300 text-[9px] px-1.5 py-0.5 rounded-md border border-emerald-700/80 font-bold">
+                        🛡️ مجمرك رسمي
+                      </span>
+                    )}
                     {item.year && (
                       <span className="bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-300 text-[10px] px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-slate-800 font-mono font-bold">
                         {item.year}
                       </span>
                     )}
-                    {item.make && (
+                    {item.make && !item.storage && (
                       <span className="bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-300 text-[10px] px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-slate-800 font-bold">
                         {item.make}
                       </span>

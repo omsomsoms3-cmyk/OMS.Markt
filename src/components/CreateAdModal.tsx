@@ -27,7 +27,7 @@ export const CreateAdModal: React.FC<CreateAdModalProps> = ({
   const { requestPermission } = usePermissions();
 
   const [title, setTitle] = useState('');
-  const [category, setCategory] = useState<'tools' | 'appliances' | 'electronics' | 'car' | 'realestate' | 'service'>('tools');
+  const [category, setCategory] = useState<'mobile' | 'tools' | 'appliances' | 'electronics' | 'car' | 'realestate' | 'service'>('mobile');
   const [condition, setCondition] = useState<'new' | 'used' | 'certified'>('used');
   const [type, setType] = useState<'sale' | 'rent'>('sale');
   const [priceUSD, setPriceUSD] = useState<string>('150');
@@ -439,12 +439,13 @@ export const CreateAdModal: React.FC<CreateAdModalProps> = ({
                   onChange={(e) => setCategory(e.target.value as any)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-slate-200 focus:outline-none focus:border-amber-500/50"
                 >
-                  <option value="tools">{language === 'ar' ? 'أدوات ومعدات صيانة' : 'Tools & Equipment'}</option>
-                  <option value="appliances">{language === 'ar' ? 'أجهزة منزلية ومولدات' : 'Appliances & Generators'}</option>
-                  <option value="electronics">{language === 'ar' ? 'إلكترونيات ولابتوبات' : 'Electronics & Computers'}</option>
-                  <option value="car">{language === 'ar' ? 'سيارات ووسائط نقل' : 'Cars & Vehicles'}</option>
-                  <option value="realestate">{language === 'ar' ? 'عقارات وشقق' : 'Real Estate'}</option>
-                  <option value="service">{language === 'ar' ? 'خدمات وتوصيل' : 'Services & Delivery'}</option>
+                  <option value="mobile">{language === 'ar' ? '📱 هواتف وموبايلات وأجهزة ذكية' : '📱 Phones & Mobile Devices'}</option>
+                  <option value="electronics">{language === 'ar' ? '💻 إلكترونيات ولابتوبات' : '💻 Electronics & Computers'}</option>
+                  <option value="car">{language === 'ar' ? '🚗 سيارات ووسائط نقل' : '🚗 Cars & Vehicles'}</option>
+                  <option value="tools">{language === 'ar' ? '🔧 أدوات ومعدات صيانة' : '🔧 Tools & Equipment'}</option>
+                  <option value="appliances">{language === 'ar' ? '⚡️ أجهزة منزلية ومولدات' : '⚡️ Appliances & Generators'}</option>
+                  <option value="realestate">{language === 'ar' ? '🏠 عقارات وشقق' : '🏠 Real Estate'}</option>
+                  <option value="service">{language === 'ar' ? '🤝 خدمات وتوصيل' : '🤝 Services & Delivery'}</option>
                 </select>
               </div>
 

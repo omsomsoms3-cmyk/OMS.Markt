@@ -1,4 +1,81 @@
-export type TabType = 'embed' | 'currency' | 'realestate' | 'cars' | 'taxidelivery' | 'jobs' | 'ledger' | 'messages' | 'saved';
+export type TabType = 'embed' | 'currency' | 'phones' | 'news' | 'realestate' | 'cars' | 'taxidelivery' | 'jobs' | 'ledger' | 'messages' | 'saved';
+
+export type PhoneBrand = 'Apple' | 'Samsung' | 'Xiaomi' | 'Infinix' | 'Tecno' | 'Realme' | 'Huawei' | 'Honor' | 'Google' | 'OnePlus' | 'Nokia' | 'Other';
+
+export interface MobilePhoneItem {
+  id: string;
+  brand: PhoneBrand;
+  modelNameAr: string;
+  modelNameEn: string;
+  storage: string;
+  ram: string;
+  colorAr: string;
+  image: string;
+  priceUSD: number; // Raw USD Price in international market
+  priceWithoutCustomsSYP: number; // Syrian Pounds price without customs
+  customsTaxSYP: number; // Syrian Customs Fee (رسم الجمركة السورية والتصريح)
+  customsTaxUSD: number;
+  totalWithCustomsSYP: number; // Full official price with customs and registered warranty
+  isOfficialCustoms: boolean; // Has official Syrian registration
+  warrantyAr: string; // e.g. "كفالة إيماتيل 12 شهر", "كفالة المتكاملة", "ضمان معتمد"
+  network: '5G' | '4G' | '3G';
+  screen: string;
+  battery: string;
+  camera: string;
+  processor: string;
+  change24h: number;
+  minuteTrend: 'up' | 'down' | 'stable';
+  isBestSeller?: boolean;
+  isNewRelease?: boolean;
+  releaseYear: number;
+  popularInCities: string[];
+  lastUpdatedMinute: string;
+  officialDistributor?: string;
+  customsTier: 'الشريحة الأولى (اقتصادي)' | 'الشريحة الثانية (متوسط)' | 'الشريحة الثالثة (فوق متوسط)' | 'الشريحة الرابعة (فلاقشيب وفائق)';
+}
+
+export interface TechProductItem {
+  id: string;
+  category: 'tablet' | 'laptop' | 'smartwatch' | 'power_solar' | 'accessories';
+  categoryAr: string;
+  nameAr: string;
+  nameEn: string;
+  brand: string;
+  image: string;
+  priceUSD: number;
+  priceSYP: number;
+  change24h: number;
+  minuteTrend: 'up' | 'down' | 'stable';
+  specsAr: string;
+  warrantyAr: string;
+  isPopularInSyria: boolean;
+  lastUpdatedMinute: string;
+}
+
+export interface SyrianOfficialNewsItem {
+  id: string;
+  titleAr: string;
+  titleEn: string;
+  summaryAr: string;
+  summaryEn: string;
+  contentAr: string;
+  contentEn: string;
+  category: 'local' | 'economy' | 'services' | 'official_statements' | 'culture' | 'sports';
+  categoryAr: string;
+  categoryEn: string;
+  governorate: string;
+  source: 'الوكالة العربية السورية للأنباء - سانا (SANA)';
+  bulletinNumber: string;
+  publishedAt: string;
+  relativeTimeAr: string;
+  relativeTimeEn: string;
+  isBreaking?: boolean;
+  isFeatured?: boolean;
+  image: string;
+  tags: string[];
+  officialSourceUrl: string;
+  viewsCount: number;
+}
 
 export interface SavedListingItem {
   id: string;
@@ -28,7 +105,36 @@ export interface CurrencyRate {
 export interface GoldRate {
   karat: string;
   priceSYP: number;
+  priceUSD?: number;
+  change24h?: number;
   updatedAt: string;
+  badge?: string;
+  description?: string;
+}
+
+export interface SyrianGoodItem {
+  id: string;
+  nameAr: string;
+  nameEn: string;
+  category: 'food_pantry' | 'produce' | 'dairy_poultry' | 'household' | 'beverages' | 'sweets_traditional' | 'crafts_syrian';
+  categoryAr: string;
+  categoryEn: string;
+  unit: string;
+  unitEn: string;
+  priceSYP: number;
+  priceUSD: number;
+  marketAverageSYP: number;
+  minPriceSYP: number;
+  maxPriceSYP: number;
+  change24h: number;
+  isSyrianMade: boolean;
+  famousOrigin?: string;
+  verifiedOnlineSource: string;
+  lastUpdated: string;
+  image: string;
+  descriptionAr: string;
+  descriptionEn: string;
+  popularBrands?: string[];
 }
 
 export interface RealEstateListing {
@@ -54,11 +160,15 @@ export interface RealEstateListing {
 export interface CarListing {
   id: string;
   title: string;
-  category?: 'car' | 'tools' | 'electronics' | 'appliances' | 'furniture' | 'realestate' | 'service';
+  category?: 'mobile' | 'phones' | 'car' | 'tools' | 'electronics' | 'appliances' | 'furniture' | 'realestate' | 'service';
   condition?: 'new' | 'used' | 'certified' | string;
   make?: string;
   model?: string;
   year?: number;
+  storage?: string;
+  ram?: string;
+  batteryHealth?: number;
+  customsStatus?: 'official' | 'uncustoms' | string;
   priceUSD: number;
   priceSYP: number;
   type: 'sale' | 'rent';

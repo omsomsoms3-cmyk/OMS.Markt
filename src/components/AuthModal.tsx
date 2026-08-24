@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, OWNER_EMAIL } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { X, Mail, Lock, User, LogIn, AlertCircle, Sparkles, CheckCircle2, ShieldCheck, Globe, Loader2 } from 'lucide-react';
+import { X, Mail, Lock, User, LogIn, AlertCircle, Sparkles, CheckCircle2, ShieldCheck, Globe, Loader2, Crown } from 'lucide-react';
 import { OmsLogo } from './OmsLogo';
 
 interface AuthModalProps {
@@ -17,6 +17,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     loginWithEmail,
     signUpWithEmail,
     loginAsGuest,
+    loginAsOwner,
     authError,
     setAuthError,
   } = useAuth();
@@ -147,6 +148,44 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             <span className="font-bold leading-tight">{successMsg}</span>
           </div>
         )}
+
+        {/* Owner Quick Login & Access Area */}
+        <div className="bg-gradient-to-r from-amber-950/70 via-slate-900 to-amber-950/70 border border-amber-500/40 rounded-2xl p-3 text-xs space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="font-black text-amber-300 flex items-center gap-1.5 text-xs">
+              <Crown className="w-4 h-4 text-amber-400 fill-amber-400 animate-pulse" />
+              <span>{language === 'ar' ? 'مساحة المالك الخاصة (OMS Owner)' : 'Owner Exclusive Portal'}</span>
+            </span>
+            <span className="bg-amber-400 text-slate-950 font-black text-[9px] px-2 py-0.5 rounded-full font-mono">
+              omsomsoms3@gmail.com
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-300 leading-relaxed">
+            {language === 'ar'
+              ? 'تسجيل الدخول ببريد المالك يمنحك صلاحية فورية لتعديل مساحة المالك وإضافة الصور والفيديوهات والإعلانات مباشرة وبكل سهولة.'
+              : 'Signing in with owner email grants full instant access to edit the owner spotlight, media, and ads directly.'}
+          </p>
+          <button
+            type="button"
+            onClick={async () => {
+              setIsSubmitting(true);
+              setSuccessMsg(null);
+              const user = await loginAsOwner();
+              setIsSubmitting(false);
+              if (user) {
+                setSuccessMsg(language === 'ar' ? 'مرحباً بمالك المنصة! تم تفعيل الصلاحيات الكاملة 👑' : 'Welcome Owner! Full permissions activated 👑');
+                setTimeout(() => {
+                  onClose();
+                }, 1200);
+              }
+            }}
+            disabled={isSubmitting}
+            className="w-full py-2 px-3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-slate-950 font-black rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer disabled:opacity-50"
+          >
+            <Crown className="w-3.5 h-3.5 fill-slate-950" />
+            <span>{language === 'ar' ? 'تسجيل الدخول المباشر كمالك (omsomsoms3@gmail.com) 👑' : 'Direct Owner Sign In (omsomsoms3@gmail.com)'}</span>
+          </button>
+        </div>
 
         {/* Fast Social Login Buttons (Google / Gmail & Facebook) */}
         <div className="space-y-2">

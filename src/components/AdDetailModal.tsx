@@ -240,6 +240,32 @@ export const AdDetailModal: React.FC<AdDetailModalProps> = ({
 
           {/* Specs Grid with Gold Borders */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+            {item.storage && (
+              <div className="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-indigo-500/40 text-center">
+                <span className="text-[10px] text-slate-500 dark:text-indigo-400 font-bold block">سعة التخزين:</span>
+                <span className="font-bold text-slate-900 dark:text-slate-100 text-sm font-mono">{item.storage}</span>
+              </div>
+            )}
+            {item.ram && (
+              <div className="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-purple-500/40 text-center">
+                <span className="text-[10px] text-slate-500 dark:text-purple-400 font-bold block">الرام (RAM):</span>
+                <span className="font-bold text-slate-900 dark:text-slate-100 text-sm font-mono">{item.ram}</span>
+              </div>
+            )}
+            {item.batteryHealth && (
+              <div className="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-emerald-500/40 text-center">
+                <span className="text-[10px] text-slate-500 dark:text-emerald-400 font-bold block">صحة البطارية:</span>
+                <span className="font-bold text-slate-900 dark:text-slate-100 text-sm font-mono">{item.batteryHealth}</span>
+              </div>
+            )}
+            {item.customsStatus && (
+              <div className="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-amber-500/40 text-center">
+                <span className="text-[10px] text-slate-500 dark:text-amber-400 font-bold block">حالة الجمركة:</span>
+                <span className="font-bold text-slate-900 dark:text-slate-100 text-sm">
+                  {item.customsStatus === 'official' ? 'مجمرك نظامي 🛡️' : item.customsStatus === 'uncustoms' ? 'بدون جمركة' : 'مشمول'}
+                </span>
+              </div>
+            )}
             {item.year && (
               <div className="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-amber-500/25 text-center">
                 <span className="text-[10px] text-slate-500 dark:text-amber-400/80 font-bold block">سنة الصنع:</span>

@@ -12,6 +12,8 @@ import { Navbar } from './components/Navbar';
 import { CurrencyGoldTicker } from './components/CurrencyGoldTicker';
 import { NetlifyEmbed } from './components/NetlifyEmbed';
 import { CurrencySection } from './components/CurrencySection';
+import { MobilePhonesSection } from './components/MobilePhonesSection';
+import { SyrianOfficialNewsSection } from './components/SyrianOfficialNewsSection';
 import { RealEstateSection } from './components/RealEstateSection';
 import { CarsSection } from './components/CarsSection';
 import { TaxiDeliverySection } from './components/TaxiDeliverySection';
@@ -38,9 +40,13 @@ import { BottomNavBar } from './components/BottomNavBar';
 import { initFirebaseMessaging, setupFCMForegroundListener, subscribeToNotificationAlerts, FCMNotification } from './lib/messaging';
 import { PlusCircle, Sparkles, Home, Zap } from 'lucide-react';
 import { initialCarListings } from './data/mockData';
+import { CategoryItemId } from './components/SwipeableCategoryBar';
 
 function MainAppContent() {
   const [activeTab, setActiveTab] = useState<TabType>('cars');
+  const [selectedCategory, setSelectedCategory] = useState<CategoryItemId>('cars');
+  const [realEstateFilterType, setRealEstateFilterType] = useState<'all' | 'sale' | 'rent'>('all');
+  const [jobsCategory, setJobsCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -95,6 +101,20 @@ function MainAppContent() {
     setActiveTab('cars');
   };
 
+  const handleSelectCategory = (categoryId: CategoryItemId, tab: TabType) => {
+    setSelectedCategory(categoryId);
+    setActiveTab(tab);
+    if (categoryId === 'realestate_sale') {
+      setRealEstateFilterType('sale');
+    } else if (categoryId === 'realestate_rent') {
+      setRealEstateFilterType('rent');
+    } else if (categoryId === 'jobs') {
+      setJobsCategory('all');
+    } else if (categoryId === 'services') {
+      setJobsCategory('tech'); // or general crafts/services
+    }
+  };
+
   return (
     <div
       className={`min-h-screen transition-all duration-500 flex flex-col font-sans selection:bg-emerald-600 selection:text-white pb-20 ${
@@ -130,6 +150,8 @@ function MainAppContent() {
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
+        selectedCategory={selectedCategory}
+        onSelectCategory={handleSelectCategory}
         userEmail={currentUserEmail}
         isLoggedIn={isLoggedIn}
         onOpenSettings={() => setIsSettingsOpen(true)}
@@ -199,9 +221,36 @@ function MainAppContent() {
 
         {activeTab === 'embed' && <NetlifyEmbed />}
         {activeTab === 'currency' && <CurrencySection />}
-        {activeTab === 'realestate' && <RealEstateSection searchQuery={searchQuery} />}
-        {activeTab === 'cars' && <CarsSection searchQuery={searchQuery} onSelectTab={(tab) => setActiveTab(tab)} />}
-        {activeTab === 'jobs' && <JobsSection searchQuery={searchQuery} />}
+        {activeTab === 'phones' && (
+          <MobilePhonesSection
+            searchQuery={searchQuery}
+            onSelectTab={(tab) => setActiveTab(tab)}
+          />
+        )}
+        {activeTab === 'news' && (
+          <SyrianOfficialNewsSection
+            searchQuery={searchQuery}
+            onSelectTab={(tab) => setActiveTab(tab)}
+          />
+        )}
+        {activeTab === 'realestate' && (
+          <RealEstateSection
+            searchQuery={searchQuery}
+            initialFilterType={realEstateFilterType}
+          />
+        )}
+        {activeTab === 'cars' && (
+          <CarsSection
+            searchQuery={searchQuery}
+            onSelectTab={(tab) => setActiveTab(tab)}
+          />
+        )}
+        {activeTab === 'jobs' && (
+          <JobsSection
+            searchQuery={searchQuery}
+            initialCategory={jobsCategory}
+          />
+        )}
         {activeTab === 'saved' && <SavedListingsSection />}
         {activeTab === 'taxidelivery' && <TaxiDeliverySection searchQuery={searchQuery} />}
         {activeTab === 'ledger' && <LedgerSection />}
