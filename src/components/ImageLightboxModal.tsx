@@ -218,6 +218,7 @@ export const ImageLightboxModal: React.FC<ImageLightboxModalProps> = ({
             src={currentSrc}
             alt={title}
             className="max-w-[90vw] max-h-[75vh] sm:max-h-[80vh] object-contain rounded-2xl shadow-2xl border border-slate-800/80 select-none"
+            referrerPolicy="no-referrer"
             draggable={false}
           />
         </div>

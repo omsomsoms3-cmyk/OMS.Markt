@@ -22,10 +22,13 @@ import {
   Clock,
   RefreshCw,
   SlidersHorizontal,
-  ChevronDown
+  ChevronDown,
+  Bookmark
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useBookmarks } from '../context/BookmarkContext';
 import { SyrianGoodItem, SYRIAN_GOODS_CATEGORIES, INITIAL_SYRIAN_GOODS } from '../data/syrianGoodsData';
+import { LazyImage } from './LazyImage';
 
 interface SyrianGoodsSectionProps {
   searchQuery?: string;
@@ -39,11 +42,29 @@ export const SyrianGoodsSection: React.FC<SyrianGoodsSectionProps> = ({
   isSyncing = false,
 }) => {
   const { language, isRtl } = useLanguage();
+  const { isBookmarked, toggleBookmark } = useBookmarks();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [syrianOnlyFilter, setSyrianOnlyFilter] = useState<boolean>(false);
   const [sortBy, setSortBy] = useState<'default' | 'price_asc' | 'price_desc' | 'change'>('default');
   const [selectedItemForModal, setSelectedItemForModal] = useState<SyrianGoodItem | null>(null);
   const [localSearch, setLocalSearch] = useState<string>('');
+
+  const handleToggleBookmarkGood = (item: SyrianGoodItem, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    toggleBookmark({
+      id: item.id,
+      itemType: 'goods',
+      title: item.nameAr,
+      subtitle: `${item.unit} • ${item.categoryAr} • ${item.isSyrianMade ? 'منتج سوري أصلي 🇸🇾' : 'سلعة مستوردة'}`,
+      city: item.famousOrigin || 'سورية - كافة المحافظات',
+      priceUSD: item.priceUSD,
+      priceSYP: item.priceSYP,
+      image: item.image,
+      phone: '0944000000',
+      savedAt: new Date().toLocaleDateString('ar-SY'),
+      originalData: item,
+    });
+  };
 
   const effectiveSearch = (searchQuery || localSearch).trim().toLowerCase();
 
@@ -217,11 +238,13 @@ export const SyrianGoodsSection: React.FC<SyrianGoodsSectionProps> = ({
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredGoods.map((item) => {
+            const isSaved = isBookmarked(item.id);
+
             return (
               <div
                 key={item.id}
                 onClick={() => setSelectedItemForModal(item)}
-                className="bg-slate-900/90 border border-slate-800 hover:border-emerald-500/50 rounded-2xl p-4 shadow-lg hover:shadow-emerald-500/10 transition-all cursor-pointer group flex flex-col justify-between space-y-3"
+                className="bg-slate-900/90 border border-slate-800 hover:border-emerald-500/50 rounded-2xl p-4 shadow-lg hover:shadow-emerald-500/10 transition-all cursor-pointer group flex flex-col justify-between space-y-3 relative"
               >
                 {/* Header & Badges */}
                 <div className="flex items-start gap-3">
@@ -244,18 +267,34 @@ export const SyrianGoodsSection: React.FC<SyrianGoodsSectionProps> = ({
                       <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md font-bold truncate">
                         {item.categoryAr}
                       </span>
-                      {item.change24h !== 0 && (
-                        <span
-                          className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 ${
-                            item.change24h > 0
-                              ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
-                              : 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                      
+                      <div className="flex items-center gap-1">
+                        {item.change24h !== 0 && (
+                          <span
+                            className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 ${
+                              item.change24h > 0
+                                ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+                                : 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                            }`}
+                          >
+                            {item.change24h > 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                            {item.change24h > 0 ? `+${item.change24h}%` : `${item.change24h}%`}
+                          </span>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={(e) => handleToggleBookmarkGood(item, e)}
+                          className={`p-1 rounded-md border transition-all cursor-pointer ${
+                            isSaved
+                              ? 'bg-amber-500/20 text-amber-400 border-amber-500/40'
+                              : 'bg-slate-800 hover:bg-slate-700 text-slate-400 border-slate-700'
                           }`}
+                          title={language === 'ar' ? 'حفظ في المفضلة' : 'Save'}
                         >
-                          {item.change24h > 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-                          {item.change24h > 0 ? `+${item.change24h}%` : `${item.change24h}%`}
-                        </span>
-                      )}
+                          <Bookmark className={`w-3.5 h-3.5 ${isSaved ? 'fill-amber-400' : ''}`} />
+                        </button>
+                      </div>
                     </div>
 
                     <h4 className="font-extrabold text-white text-sm mt-1 leading-snug line-clamp-1 group-hover:text-emerald-400 transition-colors">
@@ -316,11 +355,10 @@ export const SyrianGoodsSection: React.FC<SyrianGoodsSectionProps> = ({
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl animate-fadeIn">
             <div className="relative h-48 w-full bg-slate-950">
-              <img
+              <LazyImage
                 src={selectedItemForModal.image}
                 alt={selectedItemForModal.nameAr}
                 className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-black/60" />
               <button
@@ -401,13 +439,29 @@ export const SyrianGoodsSection: React.FC<SyrianGoodsSectionProps> = ({
                 <span className="font-mono text-[11px] text-slate-500">{selectedItemForModal.lastUpdated}</span>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setSelectedItemForModal(null)}
-                className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition-all shadow-lg shadow-emerald-600/20"
-              >
-                {language === 'ar' ? 'إغلاق نافذة السلعة' : 'Close'}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={(e) => handleToggleBookmarkGood(selectedItemForModal, e)}
+                  className={`px-4 py-3 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-1.5 cursor-pointer ${
+                    isBookmarked(selectedItemForModal.id)
+                      ? 'bg-amber-500/20 text-amber-400 border-amber-500/40 shadow-sm'
+                      : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'
+                  }`}
+                  title={language === 'ar' ? 'حفظ في المفضلة' : 'Save to Bookmarks'}
+                >
+                  <Bookmark className={`w-4 h-4 ${isBookmarked(selectedItemForModal.id) ? 'fill-amber-400' : ''}`} />
+                  <span>{isBookmarked(selectedItemForModal.id) ? (language === 'ar' ? 'محفوظ' : 'Saved') : (language === 'ar' ? 'حفظ' : 'Bookmark')}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedItemForModal(null)}
+                  className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition-all shadow-lg shadow-emerald-600/20 cursor-pointer"
+                >
+                  {language === 'ar' ? 'إغلاق نافذة السلعة' : 'Close'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

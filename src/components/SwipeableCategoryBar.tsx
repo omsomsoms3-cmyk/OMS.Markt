@@ -307,10 +307,13 @@ export const SwipeableCategoryBar: React.FC<SwipeableCategoryBarProps> = ({
     setIsDragging(false);
   };
 
-  const handleCategoryClick = (cat: typeof categories[0]) => {
+  const handleCategoryClick = (cat: typeof categories[0], e?: React.MouseEvent<HTMLButtonElement>) => {
     if (hasMoved) {
       // Prevent click action if user was dragging
       return;
+    }
+    if (e?.currentTarget) {
+      e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
     }
     if (onSelectCategory) {
       onSelectCategory(cat.id, cat.tab);
@@ -375,7 +378,7 @@ export const SwipeableCategoryBar: React.FC<SwipeableCategoryBarProps> = ({
               <button
                 key={cat.id}
                 type="button"
-                onClick={() => handleCategoryClick(cat)}
+                onClick={(e) => handleCategoryClick(cat, e)}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-2xl transition-all duration-200 shrink-0 cursor-pointer group border text-right ${
                   isActive
                     ? `${cat.activeBg} ${cat.activeBorder} shadow-lg font-black scale-[1.02]`
@@ -449,14 +452,14 @@ export const SwipeableCategoryBar: React.FC<SwipeableCategoryBarProps> = ({
       </div>
 
       {/* Mobile Touch Swipe Hint Footer with Smooth Pill Indicator */}
-      <div className="sm:hidden flex items-center justify-between px-3 py-0.5 bg-slate-950/80 border-t border-slate-800/60 text-[10px] text-slate-400">
-        <span className="flex items-center gap-1 text-amber-400/90 font-bold">
+      <div className="sm:hidden flex items-center justify-center gap-3 px-3 py-1 bg-slate-950/90 border-t border-slate-800/60 text-[10px] text-slate-400 text-center">
+        <span className="flex items-center justify-center gap-1.5 text-amber-400 font-bold">
           <span>👈</span>
-          <span>{language === 'ar' ? 'اسحب الشريط يميناً ويساراً للتنقل بين الأقسام' : 'Swipe left & right to browse all categories'}</span>
+          <span>{language === 'ar' ? 'اسحب الشريط للتنقل بين الأقسام' : 'Swipe to browse categories'}</span>
           <span>👉</span>
         </span>
-        <span className="font-mono text-[9px] text-slate-400 bg-slate-900 px-1.5 py-0.2 rounded border border-slate-800">
-          10 أقسام
+        <span className="font-mono text-[9px] text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/30 font-bold">
+          12 قسماً
         </span>
       </div>
     </div>

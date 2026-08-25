@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <defs>
+    <radialGradient id="bgGrad192" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stopColor="#0d1b2a" />
+      <stop offset="100%" stopColor="#050811" />
+    </radialGradient>
+    <linearGradient id="goldRim192" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#FFF7C2" />
+      <stop offset="30%" stopColor="#F59E0B" />
+      <stop offset="70%" stopColor="#B45309" />
+      <stop offset="100%" stopColor="#FEF08A" />
+    </linearGradient>
+    <linearGradient id="goldBright192" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stopColor="#FFFFFF" />
+      <stop offset="40%" stopColor="#FEF08A" />
+      <stop offset="100%" stopColor="#B45309" />
+    </linearGradient>
+    <radialGradient id="deepGreen192" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stopColor="#0B3C2A" />
+      <stop offset="100%" stopColor="#02150D" />
+    </radialGradient>
+  </defs>
+
+  <rect width="192" height="192" rx="42" fill="url(#bgGrad192)" />
+
+  <g transform="translate(0, -6)">
+    <!-- Medallion Ring -->
+    <circle cx="96" cy="96" r="66" fill="url(#goldRim192)" stroke="#582900" stroke-width="1.5" />
+    <circle cx="96" cy="96" r="58" fill="url(#deepGreen192)" stroke="url(#goldRim192)" stroke-width="1.5" />
+
+    <!-- Stars -->
+    <polygon points="96,48 98,53 104,53 99,57 101,62 96,59 91,62 93,57 88,53 94,53" fill="url(#goldBright192)" />
+
+    <!-- Eagle Wings & Body Simplified for crisp 192px -->
+    <path d="M 96 74 Q 72 56 46 66 Q 58 82 72 96 Q 84 86 96 90 Z" fill="url(#goldBright192)" stroke="#3E1A00" stroke-width="0.5" />
+    <path d="M 96 74 Q 120 56 146 66 Q 134 82 120 96 Q 108 86 96 90 Z" fill="url(#goldBright192)" stroke="#3E1A00" stroke-width="0.5" />
+    <path d="M 87 84 Q 96 80 105 84 Q 102 104 96 109 Q 90 104 87 84 Z" fill="url(#goldRim192)" />
+    <path d="M 91 66 Q 96 60 101 64 Q 106 67 100 72 Q 95 74 91 66 Z" fill="url(#goldBright192)" stroke="#3E1A00" stroke-width="0.5" />
+  </g>
+
+  <!-- OMS Text -->
+  <text x="96" y="174" text-anchor="middle" fill="url(#goldBright192)" font-size="20" font-weight="900" font-family="Georgia, serif" letter-spacing="2">OMS</text>
+</svg>

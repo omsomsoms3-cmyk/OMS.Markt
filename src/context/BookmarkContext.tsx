@@ -8,6 +8,7 @@ interface BookmarkContextType {
   bookmarks: SavedListingItem[];
   isBookmarked: (id: string) => boolean;
   toggleBookmark: (item: SavedListingItem) => void;
+  addBookmark: (item: SavedListingItem) => void;
   removeBookmark: (id: string) => void;
   confirmBookmark: (id: string, notes?: string) => void;
   unconfirmBookmark: (id: string) => void;
@@ -241,6 +242,7 @@ export const BookmarkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         bookmarks,
         isBookmarked,
         toggleBookmark,
+        addBookmark: toggleBookmark,
         removeBookmark,
         confirmBookmark,
         unconfirmBookmark,

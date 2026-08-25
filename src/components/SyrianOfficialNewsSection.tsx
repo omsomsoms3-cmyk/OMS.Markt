@@ -40,9 +40,13 @@ import {
   Maximize2,
   Minimize2,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Star,
+  MessageCircle,
+  Send
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useBookmarks } from '../context/BookmarkContext';
 import { SyrianOfficialNewsItem } from '../types';
 import {
   SYRIAN_NEWS_CATEGORIES,
@@ -55,6 +59,7 @@ import {
   stopNewsSpeech,
   HourlySyncStatus
 } from '../lib/syrianNewsService';
+import { LazyImage } from './LazyImage';
 
 interface SyrianOfficialNewsSectionProps {
   searchQuery?: string;
@@ -66,6 +71,7 @@ export const SyrianOfficialNewsSection: React.FC<SyrianOfficialNewsSectionProps>
   onSelectTab
 }) => {
   const { language, isRtl } = useLanguage();
+  const { isBookmarked, toggleBookmark: toggleGlobalBookmark } = useBookmarks();
   const [news, setNews] = useState<SyrianOfficialNewsItem[]>(() => getRefreshedOfficialNews());
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedGovernorate, setSelectedGovernorate] = useState<string>('الكل');
@@ -95,6 +101,34 @@ export const SyrianOfficialNewsSection: React.FC<SyrianOfficialNewsSectionProps>
       return [];
     }
   });
+  const [ratings, setRatings] = useState<Record<string, number>>(() => {
+    try {
+      const saved = localStorage.getItem('oms_news_ratings');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+  const [hoveredStar, setHoveredStar] = useState<number>(0);
+  const [ratingToast, setRatingToast] = useState<string | null>(null);
+
+  const handleRateArticle = (articleId: string, ratingValue: number) => {
+    setRatings((prev) => {
+      const updated = { ...prev, [articleId]: ratingValue };
+      try {
+        localStorage.setItem('oms_news_ratings', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+    setRatingToast(
+      language === 'ar'
+        ? `تم تسجيل تقييمك (${ratingValue}/5) بنجاح!`
+        : `Your rating (${ratingValue}/5) has been saved!`
+    );
+    setTimeout(() => {
+      setRatingToast(null);
+    }, 2500);
+  };
 
   // Hourly Live Update Timer
   useEffect(() => {
@@ -123,10 +157,29 @@ export const SyrianOfficialNewsSection: React.FC<SyrianOfficialNewsSectionProps>
     }, 600);
   };
 
-  const toggleBookmark = (id: string, e?: React.MouseEvent) => {
+  const isArticleSaved = (id: string) => {
+    return isBookmarked(id) || savedNewsIds.includes(id);
+  };
+
+  const toggleBookmark = (articleOrId: SyrianOfficialNewsItem | string, e?: React.MouseEvent) => {
     e?.stopPropagation();
+    const article = typeof articleOrId === 'string' ? news.find((n) => n.id === articleOrId) : articleOrId;
+    if (!article) return;
+
+    toggleGlobalBookmark({
+      id: article.id,
+      itemType: 'news',
+      title: article.titleAr,
+      subtitle: article.summaryAr,
+      city: article.governorate || 'شامل سورية',
+      phone: 'سانا (SANA)',
+      image: article.image,
+      savedAt: new Date().toLocaleDateString('ar-SY'),
+      originalData: article,
+    });
+
     setSavedNewsIds((prev) => {
-      const updated = prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id];
+      const updated = prev.includes(article.id) ? prev.filter((item) => item !== article.id) : [...prev, article.id];
       try {
         localStorage.setItem('oms_saved_sana_news', JSON.stringify(updated));
       } catch {}
@@ -209,22 +262,49 @@ export const SyrianOfficialNewsSection: React.FC<SyrianOfficialNewsSectionProps>
     }
   };
 
+  const getShareText = (article: SyrianOfficialNewsItem) => {
+    return `📰 *${article.titleAr}*\n\n${article.summaryAr}\n\n📍 المصدر الرسمي: الوكالة العربية السورية للأنباء (سانا)\n📅 ${article.relativeTimeAr} • ${article.bulletinNumber}\n🌐 تطبيق OMS - دليلك الشامل للأسواق والأسعار في سورية`;
+  };
+
+  const shareToWhatsApp = (article: SyrianOfficialNewsItem) => {
+    const text = getShareText(article);
+    const url = window.location.href;
+    const fullMessage = `${text}\n🔗 ${url}`;
+    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(fullMessage)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  const shareToTelegram = (article: SyrianOfficialNewsItem) => {
+    const text = getShareText(article);
+    const url = window.location.href;
+    const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+    window.open(telegramUrl, '_blank');
+  };
+
+  const copyArticleLink = async (article: SyrianOfficialNewsItem) => {
+    const text = `${getShareText(article)}\n🔗 ${window.location.href}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2500);
+    } catch {}
+  };
+
   const handleShare = async (article: SyrianOfficialNewsItem) => {
-    const text = `${article.titleAr}\n${article.summaryAr}\nالمصدر: الوكالة العربية السورية للأنباء (سانا)\nعبر تطبيق OMS الأسواق السورية`;
+    const text = getShareText(article);
     if (navigator.share) {
       try {
         await navigator.share({
           title: article.titleAr,
-          text,
+          text: text,
           url: window.location.href,
         });
-      } catch {}
+      } catch {
+        // user cancelled or failed, fallback to copy
+        await copyArticleLink(article);
+      }
     } else {
-      try {
-        await navigator.clipboard.writeText(text);
-        setCopiedLink(true);
-        setTimeout(() => setCopiedLink(false), 2500);
-      } catch {}
+      await copyArticleLink(article);
     }
   };
 
@@ -258,51 +338,6 @@ export const SyrianOfficialNewsSection: React.FC<SyrianOfficialNewsSectionProps>
     }
   }, [currentArticleIndex, filteredNews]);
 
-  // Touch & Mouse Drag State for Left/Right Swiping
-  const [dragOffset, setDragOffset] = useState<number>(0);
-  const [isDragging, setIsDragging] = useState<boolean>(false);
-  const dragStartXRef = useRef<number | null>(null);
-  const isPointerDownRef = useRef<boolean>(false);
-
-  const handleDragStart = (clientX: number) => {
-    dragStartXRef.current = clientX;
-    isPointerDownRef.current = true;
-    setIsDragging(true);
-  };
-
-  const handleDragMove = (clientX: number) => {
-    if (!isPointerDownRef.current || dragStartXRef.current === null) return;
-    const diff = clientX - dragStartXRef.current;
-    if (Math.abs(diff) < 260) {
-      setDragOffset(diff);
-    }
-  };
-
-  const handleDragEnd = () => {
-    if (!isPointerDownRef.current) return;
-    isPointerDownRef.current = false;
-    setIsDragging(false);
-    
-    // Swipe threshold
-    if (dragOffset > 55) {
-      // Swiped right
-      if (isRtl) {
-        goToPrevArticle();
-      } else {
-        goToNextArticle();
-      }
-    } else if (dragOffset < -55) {
-      // Swiped left
-      if (isRtl) {
-        goToNextArticle();
-      } else {
-        goToPrevArticle();
-      }
-    }
-    setDragOffset(0);
-    dragStartXRef.current = null;
-  };
-
   // Keyboard navigation when article is open
   useEffect(() => {
     if (!selectedArticle) return;
@@ -317,45 +352,46 @@ export const SyrianOfficialNewsSection: React.FC<SyrianOfficialNewsSectionProps>
         stopNewsSpeech();
         setSpeakingId(null);
         setSelectedArticle(null);
+        setIsFullscreen(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedArticle, goToNextArticle, goToPrevArticle, isRtl]);
+  }, [selectedArticle, goToNextArticle, goToPrevArticle, isRtl, stopNewsSpeech]);
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto px-3 sm:px-4 py-4">
+    <div className="space-y-6 max-w-7xl mx-auto px-3 sm:px-4 py-4 w-full max-w-full overflow-x-hidden">
       {/* Official SANA Agency Master Header Banner */}
-      <div className="bg-gradient-to-r from-red-950 via-slate-900 to-slate-900 border border-red-500/40 rounded-3xl p-5 sm:p-7 shadow-2xl relative overflow-hidden">
+      <div className="bg-gradient-to-r from-red-950 via-slate-900 to-slate-900 border border-red-500/40 rounded-3xl p-4 sm:p-7 shadow-2xl relative overflow-hidden w-full">
         {/* Background decorative watermark */}
         <div className="absolute -right-8 -top-8 w-44 h-44 bg-red-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute right-10 bottom-2 text-slate-800/20 font-black text-7xl select-none pointer-events-none font-mono">
+        <div className="absolute right-10 bottom-2 text-slate-800/20 font-black text-6xl sm:text-7xl select-none pointer-events-none font-mono">
           SANA
         </div>
 
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="p-3 bg-red-600/20 text-red-400 rounded-2xl border border-red-500/40 shrink-0 shadow-lg shadow-red-500/10">
-              <Radio className="w-7 h-7 animate-pulse text-red-400" />
+          <div className="flex items-start gap-3 sm:gap-4 min-w-0">
+            <div className="p-2.5 sm:p-3 bg-red-600/20 text-red-400 rounded-2xl border border-red-500/40 shrink-0 shadow-lg shadow-red-500/10">
+              <Radio className="w-6 h-6 sm:w-7 sm:h-7 animate-pulse text-red-400" />
             </div>
-            <div>
-              <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                <span className="bg-red-500 text-white font-black text-[11px] px-2.5 py-0.5 rounded-full shadow-md flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-white animate-ping"></span>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1">
+                <span className="bg-red-500 text-white font-black text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
                   {language === 'ar' ? 'الوكالة السورية الرسمية (سانا)' : 'Official Syrian News (SANA)'}
                 </span>
-                <span className="bg-slate-800 text-slate-300 text-[10px] px-2.5 py-0.5 rounded-full border border-slate-700 font-bold flex items-center gap-1">
+                <span className="bg-slate-800 text-slate-300 text-[10px] px-2 py-0.5 rounded-full border border-slate-700 font-bold flex items-center gap-1">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  {language === 'ar' ? 'مصدر رسمي موثق حصرياً' : '100% Verified Official Source'}
+                  {language === 'ar' ? 'مصدر رسمي موثق' : '100% Verified Source'}
                 </span>
               </div>
 
-              <h2 className="text-xl sm:text-2xl font-black text-white leading-snug">
+              <h2 className="text-base sm:text-xl md:text-2xl font-black text-white leading-snug break-words">
                 {language === 'ar'
                   ? 'أخبار الوكالة العربية السورية للأنباء (سانا) — نشرة حية ساعة بساعة'
                   : 'Syrian Arab News Agency (SANA) — Official Hourly News Wire'}
               </h2>
-              <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
+              <p className="text-[11px] sm:text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed break-words">
                 {language === 'ar'
                   ? 'متابعة رسمية ومباشرة لكافة المراسيم، القرارات الاقتصادية، مشاريع التنمية والمحافظات، والفعاليات الوطنية من المصدر الرسمي فقط.'
                   : 'Direct official feed of decrees, economic bulletins, governorate projects, and national developments exclusively from SANA.'}
@@ -542,7 +578,7 @@ export const SyrianOfficialNewsSection: React.FC<SyrianOfficialNewsSectionProps>
 
           <div className="space-y-6">
             {filteredNews.map((item) => {
-              const isSaved = savedNewsIds.includes(item.id);
+              const isSaved = isArticleSaved(item.id);
               const isSpeaking = speakingId === item.id;
 
               return (
@@ -551,12 +587,14 @@ export const SyrianOfficialNewsSection: React.FC<SyrianOfficialNewsSectionProps>
                   className="bg-slate-900/95 border border-slate-800 hover:border-red-500/40 rounded-3xl overflow-hidden shadow-xl transition-all"
                 >
                   {/* Article Media Header */}
-                  <div className="relative h-48 sm:h-72 w-full bg-slate-950 overflow-hidden">
-                    <img
+                  <div 
+                    onClick={() => setSelectedArticle(item)}
+                    className="relative h-48 sm:h-72 w-full bg-slate-950 overflow-hidden cursor-pointer group"
+                  >
+                    <LazyImage
                       src={item.image}
                       alt={item.titleAr}
-                      className="w-full h-full object-cover"
-                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/30 to-black/50" />
 
@@ -629,7 +667,10 @@ export const SyrianOfficialNewsSection: React.FC<SyrianOfficialNewsSectionProps>
                     </div>
 
                     {/* Headline */}
-                    <h3 className="text-xl sm:text-2xl font-black text-white leading-snug">
+                    <h3 
+                      onClick={() => setSelectedArticle(item)}
+                      className="text-xl sm:text-2xl font-black text-white hover:text-red-400 transition-colors leading-snug cursor-pointer"
+                    >
                       {item.titleAr}
                     </h3>
 
@@ -684,17 +725,18 @@ export const SyrianOfficialNewsSection: React.FC<SyrianOfficialNewsSectionProps>
         <div className="space-y-6">
           {/* Featured Hero Article */}
           {featuredNews && selectedCategory === 'all' && !effectiveSearch && (
-            <div className="bg-slate-900/90 border border-slate-800 hover:border-red-500/50 rounded-3xl overflow-hidden shadow-2xl transition-all">
+            <div 
+              onClick={() => setSelectedArticle(featuredNews)}
+              className="bg-slate-900/90 border border-slate-800 hover:border-red-500/50 hover:bg-slate-900 rounded-3xl overflow-hidden shadow-2xl transition-all cursor-pointer group select-none"
+            >
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
                 <div
-                  onClick={() => setSelectedArticle(featuredNews)}
-                  className="lg:col-span-7 h-56 sm:h-72 lg:h-auto min-h-[220px] relative overflow-hidden bg-slate-950 cursor-pointer group"
+                  className="lg:col-span-7 h-56 sm:h-72 lg:h-auto min-h-[220px] relative overflow-hidden bg-slate-950"
                 >
-                  <img
+                  <LazyImage
                     src={featuredNews.image}
                     alt={featuredNews.titleAr}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    referrerPolicy="no-referrer"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-black/40 lg:hidden" />
                   {featuredNews.isBreaking && (
@@ -714,37 +756,39 @@ export const SyrianOfficialNewsSection: React.FC<SyrianOfficialNewsSectionProps>
                       <span className="text-xs font-black bg-red-500/20 text-red-400 border border-red-500/30 px-2.5 py-0.5 rounded-full">
                         {featuredNews.categoryAr}
                       </span>
-                      <span className="text-[11px] text-slate-400 font-mono">
-                        {featuredNews.bulletinNumber}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="flex items-center gap-1 text-amber-400 font-bold bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 text-[10px]">
+                          <Star className="w-3 h-3 fill-amber-400" />
+                          <span>{ratings[featuredNews.id] ? `${ratings[featuredNews.id]}.0` : '4.9'}</span>
+                        </span>
+                        <span className="text-[11px] text-slate-400 font-mono">
+                          {featuredNews.bulletinNumber}
+                        </span>
+                      </div>
                     </div>
 
                     <h3
-                      onClick={() => setSelectedArticle(featuredNews)}
-                      className="text-xl sm:text-2xl font-black text-white hover:text-red-400 transition-colors leading-snug cursor-pointer"
+                      className="text-xl sm:text-2xl font-black text-white group-hover:text-red-400 transition-colors leading-snug"
                     >
                       {featuredNews.titleAr}
                     </h3>
 
-                    <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                    <p className="text-xs sm:text-sm text-slate-300 leading-relaxed line-clamp-4">
                       {featuredNews.summaryAr}
                     </p>
                   </div>
 
-                  {/* Inline Expanded Content */}
-                  {expandedArticles[featuredNews.id] && (
-                    <div className="pt-3 border-t border-slate-800 space-y-3 animate-fadeIn">
-                      <div className="text-xs sm:text-sm text-slate-200 leading-loose whitespace-pre-line bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800">
-                        {featuredNews.contentAr}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="pt-4 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+                  <div 
+                    onClick={(e) => e.stopPropagation()}
+                    className="pt-4 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400"
+                  >
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={(e) => handleSpeechToggle(featuredNews, e)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSpeechToggle(featuredNews, e);
+                        }}
                         className={`p-2 rounded-xl border transition-all cursor-pointer ${
                           speakingId === featuredNews.id
                             ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md'
@@ -757,33 +801,30 @@ export const SyrianOfficialNewsSection: React.FC<SyrianOfficialNewsSectionProps>
 
                       <button
                         type="button"
-                        onClick={(e) => toggleBookmark(featuredNews.id, e)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleBookmark(featuredNews, e);
+                        }}
                         className={`p-2 rounded-xl border transition-all cursor-pointer ${
-                          savedNewsIds.includes(featuredNews.id)
+                          isArticleSaved(featuredNews.id)
                             ? 'bg-amber-500/20 text-amber-400 border-amber-500/40'
                             : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
                         }`}
                         title={language === 'ar' ? 'حفظ في المفضلة' : 'Bookmark'}
                       >
-                        <Bookmark className={`w-4 h-4 ${savedNewsIds.includes(featuredNews.id) ? 'fill-amber-400' : ''}`} />
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={(e) => toggleExpandArticle(featuredNews.id, e)}
-                        className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl border border-slate-700 font-bold text-xs flex items-center gap-1 cursor-pointer transition-all"
-                      >
-                        <span>{expandedArticles[featuredNews.id] ? (language === 'ar' ? 'طي النص' : 'Collapse') : (language === 'ar' ? 'قراءة الخبر كاملاً 📖' : 'Read Full')}</span>
-                        {expandedArticles[featuredNews.id] ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                        <Bookmark className={`w-4 h-4 ${isArticleSaved(featuredNews.id) ? 'fill-amber-400' : ''}`} />
                       </button>
                     </div>
 
                     <button
                       type="button"
-                      onClick={() => setSelectedArticle(featuredNews)}
-                      className="text-red-400 hover:text-red-300 font-bold flex items-center gap-1 cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedArticle(featuredNews);
+                      }}
+                      className="px-3.5 py-1.5 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-md shadow-red-600/20 cursor-pointer"
                     >
-                      <span>{language === 'ar' ? 'فتح العارض' : 'Open'}</span>
+                      <span>{language === 'ar' ? 'قراءة التفاصيل كاملة' : 'Read Full Details'}</span>
                       <ChevronLeft className="w-4 h-4" />
                     </button>
                   </div>
@@ -795,24 +836,23 @@ export const SyrianOfficialNewsSection: React.FC<SyrianOfficialNewsSectionProps>
           {/* Grid of Other Articles */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {(selectedCategory === 'all' && !effectiveSearch ? nonFeaturedNews : filteredNews).map((item) => {
-              const isSaved = savedNewsIds.includes(item.id);
+              const isSaved = isArticleSaved(item.id);
               const isSpeaking = speakingId === item.id;
               const isExpanded = expandedArticles[item.id];
 
               return (
                 <div
                   key={item.id}
-                  className="bg-slate-900/90 border border-slate-800 hover:border-red-500/40 rounded-2xl overflow-hidden shadow-lg hover:shadow-red-500/10 transition-all flex flex-col justify-between"
+                  onClick={() => setSelectedArticle(item)}
+                  className="bg-slate-900/90 border border-slate-800 hover:border-red-500/50 hover:bg-slate-900 rounded-2xl overflow-hidden shadow-lg hover:shadow-red-500/10 transition-all flex flex-col justify-between cursor-pointer group select-none"
                 >
                   <div
-                    onClick={() => setSelectedArticle(item)}
-                    className="relative h-44 w-full bg-slate-950 overflow-hidden cursor-pointer group"
+                    className="relative h-44 w-full bg-slate-950 overflow-hidden"
                   >
-                    <img
+                    <LazyImage
                       src={item.image}
                       alt={item.titleAr}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      referrerPolicy="no-referrer"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent" />
                     
@@ -827,15 +867,26 @@ export const SyrianOfficialNewsSection: React.FC<SyrianOfficialNewsSectionProps>
                       )}
                     </div>
 
-                    <span className="absolute bottom-2 right-2 text-[10px] bg-slate-950/80 text-amber-300 px-2 py-0.5 rounded font-bold border border-slate-800">
-                      📍 {item.governorate}
-                    </span>
+                    <div className="absolute bottom-2 right-2 left-2 flex items-center justify-between pointer-events-none">
+                      <span className="text-[10px] bg-slate-950/80 text-amber-300 px-2 py-0.5 rounded font-bold border border-slate-800">
+                        📍 {item.governorate}
+                      </span>
+                      <span className="text-[10px] bg-red-600/90 text-white px-2 py-0.5 rounded font-bold shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                        {language === 'ar' ? 'عرض التفاصيل ↗' : 'Read Article ↗'}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono">
-                        <span>{item.bulletinNumber}</span>
+                        <div className="flex items-center gap-1.5">
+                          <span>{item.bulletinNumber}</span>
+                          <span className="flex items-center gap-0.5 text-amber-400 font-bold bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 text-[9.5px]">
+                            <Star className="w-2.5 h-2.5 fill-amber-400" />
+                            <span>{ratings[item.id] ? `${ratings[item.id]}.0` : '4.8'}</span>
+                          </span>
+                        </div>
                         <span className="flex items-center gap-0.5 text-slate-500">
                           <Eye className="w-3 h-3" />
                           <span>{item.viewsCount.toLocaleString()}</span>
@@ -843,34 +894,28 @@ export const SyrianOfficialNewsSection: React.FC<SyrianOfficialNewsSectionProps>
                       </div>
 
                       <h4
-                        onClick={() => setSelectedArticle(item)}
-                        className="text-sm font-extrabold text-white hover:text-red-400 transition-colors leading-snug cursor-pointer"
+                        className="text-sm font-extrabold text-white group-hover:text-red-400 transition-colors leading-snug"
                       >
                         {item.titleAr}
                       </h4>
 
-                      {/* Summary or Full Content if Expanded */}
-                      {isExpanded ? (
-                        <div className="space-y-2 pt-1 animate-fadeIn">
-                          <p className="text-xs text-amber-300/90 font-medium bg-slate-950/70 p-2.5 rounded-xl border border-slate-800">
-                            {item.summaryAr}
-                          </p>
-                          <div className="text-xs text-slate-200 leading-relaxed whitespace-pre-line bg-slate-950/90 p-3 rounded-xl border border-slate-800 max-h-60 overflow-y-auto">
-                            {item.contentAr}
-                          </div>
-                        </div>
-                      ) : (
-                        <p className="text-xs text-slate-400 leading-relaxed">
-                          {item.summaryAr}
-                        </p>
-                      )}
+                      {/* Summary */}
+                      <p className="text-xs text-slate-400 leading-relaxed line-clamp-3">
+                        {item.summaryAr}
+                      </p>
                     </div>
 
-                    <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+                    <div 
+                      onClick={(e) => e.stopPropagation()} 
+                      className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400"
+                    >
                       <div className="flex items-center gap-1.5">
                         <button
                           type="button"
-                          onClick={(e) => handleSpeechToggle(item, e)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSpeechToggle(item, e);
+                          }}
                           className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
                             isSpeaking
                               ? 'bg-amber-500 text-slate-950 border-amber-400'
@@ -883,7 +928,10 @@ export const SyrianOfficialNewsSection: React.FC<SyrianOfficialNewsSectionProps>
 
                         <button
                           type="button"
-                          onClick={(e) => toggleBookmark(item.id, e)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleBookmark(item.id, e);
+                          }}
                           className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
                             isSaved
                               ? 'bg-amber-500/20 text-amber-400 border-amber-500/40'
@@ -893,23 +941,18 @@ export const SyrianOfficialNewsSection: React.FC<SyrianOfficialNewsSectionProps>
                         >
                           <Bookmark className={`w-3.5 h-3.5 ${isSaved ? 'fill-amber-400' : ''}`} />
                         </button>
-
-                        <button
-                          type="button"
-                          onClick={(e) => toggleExpandArticle(item.id, e)}
-                          className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-all"
-                        >
-                          <span>{isExpanded ? (language === 'ar' ? 'طي' : 'Less') : (language === 'ar' ? 'قراءة الخبر كاملاً' : 'Full Text')}</span>
-                          {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                        </button>
                       </div>
 
                       <button
                         type="button"
-                        onClick={() => setSelectedArticle(item)}
-                        className="text-red-400 hover:text-red-300 font-mono text-[10px] font-bold flex items-center gap-0.5 cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedArticle(item);
+                        }}
+                        className="px-2.5 py-1 bg-red-600/10 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/30 hover:border-red-600 rounded-lg text-[11px] font-bold flex items-center gap-1 transition-all cursor-pointer"
                       >
-                        <span>{language === 'ar' ? 'عارض ↗' : 'View ↗'}</span>
+                        <span>{language === 'ar' ? 'قراءة الخبر كاملاً' : 'Read More'}</span>
+                        <ExternalLink className="w-3 h-3" />
                       </button>
                     </div>
                   </div>
@@ -963,215 +1006,363 @@ export const SyrianOfficialNewsSection: React.FC<SyrianOfficialNewsSectionProps>
             <ChevronRight className="w-6 h-6" />
           </button>
 
-          {/* Centered Modal Container with Interactive Drag Translation */}
+          {/* Centered Modal Container (Purely Vertical Scroll, Compact & Fixed in Center) */}
           <div 
-            onTouchStart={(e) => handleDragStart(e.touches[0].clientX)}
-            onTouchMove={(e) => handleDragMove(e.touches[0].clientX)}
-            onTouchEnd={handleDragEnd}
-            onMouseDown={(e) => handleDragStart(e.clientX)}
-            onMouseMove={(e) => handleDragMove(e.clientX)}
-            onMouseUp={handleDragEnd}
-            onMouseLeave={handleDragEnd}
-            style={{
-              transform: dragOffset ? `translateX(${dragOffset}px) rotate(${dragOffset * 0.02}deg)` : undefined,
-              transition: isDragging ? 'none' : 'transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1)',
-              cursor: isDragging ? 'grabbing' : 'default'
-            }}
-            className={`relative bg-slate-900 border border-slate-700 shadow-2xl animate-fadeIn flex flex-col mx-auto select-none ${
+            className={`relative bg-slate-900 border border-slate-700 shadow-2xl animate-fadeIn flex flex-col mx-auto transition-all select-none ${
               isFullscreen
-                ? 'w-full h-full max-h-screen rounded-none fixed inset-0 z-50'
-                : 'rounded-3xl max-w-2xl w-full my-auto max-h-[94vh] sm:max-h-[90vh] overflow-hidden'
+                ? 'h-full max-h-screen rounded-none fixed inset-0 z-50 w-full'
+                : 'rounded-2xl w-[calc(100%-1rem)] max-w-md my-auto max-h-[82vh] overflow-hidden'
             }`}
           >
-            {/* Top Drag & Swipe Interactive Banner */}
-            <div className="bg-slate-950/95 px-4 py-2 border-b border-slate-800 flex items-center justify-between text-xs text-slate-300 shrink-0">
-              <div className="flex items-center gap-1.5 text-[11px] text-amber-400 font-bold">
-                <MoveHorizontal className="w-3.5 h-3.5 animate-pulse" />
-                <span>
-                  {language === 'ar' ? 'اسحب للتنقل بين الأخبار' : 'Swipe left/right to browse'}
+            {/* Top Navigation & Action Banner */}
+            <div className="bg-slate-950 px-3 py-2 border-b border-slate-800 flex items-center justify-between text-xs text-slate-300 shrink-0">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0"></span>
+                <span className="font-bold text-white text-[11px] sm:text-xs truncate">
+                  {language === 'ar' ? 'تفاصيل الخبر الرسمي' : 'Official News Details'}
                 </span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 shrink-0">
                 {/* Fullscreen toggle button */}
                 <button
                   type="button"
                   onClick={() => setIsFullscreen(!isFullscreen)}
-                  className="p-1 rounded-md text-slate-400 hover:text-white bg-slate-800/80 hover:bg-slate-700 transition-colors"
+                  className="p-1 rounded-md text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 transition-colors cursor-pointer"
                   title={isFullscreen ? 'تصغير' : 'ملء الشاشة'}
                 >
                   {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
                 </button>
 
                 {/* Counter Indicator */}
-                <div className="flex items-center gap-1 bg-slate-900 px-2.5 py-0.5 rounded-full border border-slate-700 font-mono text-[11px] font-bold text-slate-300">
+                <div className="flex items-center gap-1 bg-slate-900 px-1.5 py-0.5 rounded-full border border-slate-700 font-mono text-[10px] font-bold text-slate-300">
                   <span>{currentArticleIndex >= 0 ? currentArticleIndex + 1 : 1}</span>
                   <span className="text-slate-500">/</span>
                   <span>{filteredNews.length}</span>
                 </div>
+
+                {/* Direct Close Button in Header */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    stopNewsSpeech();
+                    setSpeakingId(null);
+                    setSelectedArticle(null);
+                    setIsFullscreen(false);
+                  }}
+                  className="w-6 h-6 rounded-full bg-slate-800 hover:bg-red-600 text-slate-300 hover:text-white flex items-center justify-center text-xs transition-colors cursor-pointer"
+                  title={language === 'ar' ? 'إغلاق' : 'Close'}
+                >
+                  ✕
+                </button>
               </div>
             </div>
 
-            {/* Header image & modal close */}
-            <div className="relative h-36 sm:h-48 md:h-56 w-full bg-slate-950 shrink-0">
-              <img
-                src={selectedArticle.image}
-                alt={selectedArticle.titleAr}
-                className="w-full h-full object-cover pointer-events-none"
-                referrerPolicy="no-referrer"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-black/70 pointer-events-none" />
-              
-              {/* Close Button */}
-              <button
-                type="button"
-                onClick={() => {
-                  stopNewsSpeech();
-                  setSpeakingId(null);
-                  setSelectedArticle(null);
-                  setIsFullscreen(false);
-                }}
-                className="absolute top-3 left-3 w-8 h-8 rounded-full bg-slate-950/80 hover:bg-slate-800 text-white flex items-center justify-center border border-slate-700 transition-all cursor-pointer shadow-lg z-20"
-              >
-                ✕
-              </button>
+            {/* Scrollable Container (Pure Vertical Scroll Downwards) */}
+            <div className="overflow-y-auto overscroll-contain flex-1 flex flex-col">
+              {/* Header image & badges */}
+              <div className="relative h-32 sm:h-40 w-full bg-slate-950 shrink-0">
+                <LazyImage
+                  src={selectedArticle.image}
+                  alt={selectedArticle.titleAr}
+                  className="w-full h-full object-cover pointer-events-none"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-black/60 pointer-events-none" />
 
-              <div className="absolute top-3 right-3 flex items-center gap-2 z-20">
-                <span className="bg-red-600 text-white text-xs font-black px-2.5 py-0.5 rounded-full shadow-lg">
-                  {selectedArticle.source}
-                </span>
-                {selectedArticle.isBreaking && (
-                  <span className="bg-amber-500 text-slate-950 text-xs font-black px-2 py-0.5 rounded-full shadow-lg">
-                    عاجل ⚡️
+                <div className="absolute top-2 right-2 flex items-center gap-1 z-20">
+                  <span className="bg-red-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg">
+                    {selectedArticle.source}
                   </span>
-                )}
-              </div>
-
-              <div className="absolute bottom-2.5 right-3 left-3 flex items-center justify-between text-xs text-slate-200 pointer-events-none">
-                <span className="bg-slate-950/80 px-2.5 py-0.5 rounded-lg border border-slate-700 font-bold text-[11px] text-amber-300">
-                  📍 {selectedArticle.governorate} • {selectedArticle.categoryAr}
-                </span>
-                <span className="font-mono text-slate-300 bg-slate-950/80 px-2 py-0.5 rounded-lg text-[10px]">
-                  {selectedArticle.bulletinNumber}
-                </span>
-              </div>
-            </div>
-
-            {/* Modal Body with Full Complete News Text */}
-            <div className="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1 select-text overscroll-contain">
-              {/* Controls bar: Font resize, Speech, Share */}
-              <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800 text-xs">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-slate-400 text-[11px]">{language === 'ar' ? 'حجم الخط:' : 'Font:'}</span>
-                  <button
-                    type="button"
-                    onClick={() => setFontSize('normal')}
-                    className={`px-2 py-1 rounded-lg text-xs font-bold ${fontSize === 'normal' ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-300'}`}
-                  >
-                    A
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFontSize('large')}
-                    className={`px-2 py-1 rounded-lg text-xs font-bold ${fontSize === 'large' ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-300'}`}
-                  >
-                    A+
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFontSize('xlarge')}
-                    className={`px-2 py-1 rounded-lg text-xs font-bold ${fontSize === 'xlarge' ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-300'}`}
-                  >
-                    A++
-                  </button>
+                  {selectedArticle.isBreaking && (
+                    <span className="bg-amber-500 text-slate-950 text-[9px] font-black px-1.5 py-0.5 rounded-full shadow-lg">
+                      عاجل ⚡️
+                    </span>
+                  )}
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleSpeechToggle(selectedArticle)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                      speakingId === selectedArticle.id
-                        ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md'
-                        : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'
-                    }`}
-                  >
-                    {speakingId === selectedArticle.id ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
-                    <span>{speakingId === selectedArticle.id ? (language === 'ar' ? 'إيقاف' : 'Stop') : (language === 'ar' ? 'استماع للخبر' : 'Listen')}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleShare(selectedArticle)}
-                    className="flex items-center gap-1 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl border border-slate-700 text-xs font-bold transition-all cursor-pointer"
-                  >
-                    {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Share2 className="w-3.5 h-3.5" />}
-                    <span>{copiedLink ? (language === 'ar' ? 'تم النسخ!' : 'Copied!') : (language === 'ar' ? 'مشاركة' : 'Share')}</span>
-                  </button>
+                <div className="absolute bottom-2 right-2 left-2 flex items-center justify-between text-[10px] text-slate-200 pointer-events-none">
+                  <span className="bg-slate-950/80 px-2 py-0.5 rounded-lg border border-slate-700 font-bold text-amber-300 truncate max-w-[60%]">
+                    📍 {selectedArticle.governorate} • {selectedArticle.categoryAr}
+                  </span>
+                  <span className="font-mono text-slate-300 bg-slate-950/80 px-1.5 py-0.5 rounded-md text-[9px] shrink-0">
+                    {selectedArticle.bulletinNumber}
+                  </span>
                 </div>
               </div>
 
-              {/* Title & Timing */}
-              <div>
-                <h3 className="text-lg sm:text-2xl font-black text-white leading-snug">
-                  {selectedArticle.titleAr}
-                </h3>
-                <p className="text-xs text-red-400 font-mono mt-1 flex items-center gap-1">
-                  <span>{selectedArticle.source}</span> • <span>{selectedArticle.relativeTimeAr}</span>
-                </p>
-              </div>
+              {/* Modal Body with Full Complete News Text */}
+              <div className="p-3 sm:p-4 space-y-3 select-text">
+                {/* Controls bar: Font resize, Speech, Share */}
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-800 text-xs">
+                  <div className="flex items-center gap-1">
+                    <span className="text-slate-400 text-[11px]">{language === 'ar' ? 'الخط:' : 'Font:'}</span>
+                    <button
+                      type="button"
+                      onClick={() => setFontSize('normal')}
+                      className={`px-2 py-0.5 rounded-md text-xs font-bold transition-colors cursor-pointer ${fontSize === 'normal' ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+                    >
+                      A
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFontSize('large')}
+                      className={`px-2 py-0.5 rounded-md text-xs font-bold transition-colors cursor-pointer ${fontSize === 'large' ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+                    >
+                      A+
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFontSize('xlarge')}
+                      className={`px-2 py-0.5 rounded-md text-xs font-bold transition-colors cursor-pointer ${fontSize === 'xlarge' ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+                    >
+                      A++
+                    </button>
+                  </div>
 
-              {/* Summary Highlight Box */}
-              <div className="bg-red-950/30 border border-red-500/30 p-3.5 sm:p-4 rounded-2xl text-slate-200 text-xs sm:text-sm font-semibold leading-relaxed">
-                {selectedArticle.summaryAr}
-              </div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleSpeechToggle(selectedArticle)}
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded-lg border text-xs font-bold transition-all cursor-pointer ${
+                        speakingId === selectedArticle.id
+                          ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md'
+                          : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'
+                      }`}
+                    >
+                      {speakingId === selectedArticle.id ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
+                      <span>{speakingId === selectedArticle.id ? (language === 'ar' ? 'إيقاف' : 'Stop') : (language === 'ar' ? 'استماع' : 'Listen')}</span>
+                    </button>
 
-              {/* Full Dispatch Content (Entire post text fully rendered without truncation) */}
-              <div
-                className={`text-slate-200 leading-loose whitespace-pre-line ${
-                  fontSize === 'xlarge' ? 'text-base sm:text-lg' : fontSize === 'large' ? 'text-sm sm:text-base' : 'text-xs sm:text-sm'
-                }`}
-              >
-                {selectedArticle.contentAr}
-              </div>
+                    <button
+                      type="button"
+                      onClick={() => toggleBookmark(selectedArticle)}
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded-lg border text-xs font-bold transition-all cursor-pointer ${
+                        isArticleSaved(selectedArticle.id)
+                          ? 'bg-amber-500/20 text-amber-400 border-amber-500/40 shadow-sm'
+                          : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'
+                      }`}
+                      title={language === 'ar' ? 'حفظ في المفضلة' : 'Save to Bookmarks'}
+                    >
+                      <Bookmark className={`w-3 h-3 ${isArticleSaved(selectedArticle.id) ? 'fill-amber-400' : ''}`} />
+                      <span>{isArticleSaved(selectedArticle.id) ? (language === 'ar' ? 'محفوظ' : 'Saved') : (language === 'ar' ? 'حفظ' : 'Bookmark')}</span>
+                    </button>
 
-              {/* Official Seal and Verification Stamp */}
-              <div className="bg-slate-950 p-3.5 sm:p-4 rounded-2xl border border-slate-800 flex items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-6 h-6 text-emerald-400 shrink-0" />
-                  <div>
-                    <span className="font-extrabold text-white block">
-                      {language === 'ar' ? 'توثيق الوكالة العربية السورية للأنباء (سانا)' : 'Official SANA Agency Stamp'}
-                    </span>
-                    <span className="text-[10px] text-slate-400">
-                      {language === 'ar' ? 'تم التحقق من البرقية الرسمية ونشرها وفق الأصول الصحفية' : 'Verified official dispatch'}
-                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleShare(selectedArticle)}
+                      className="flex items-center gap-1 px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 text-xs font-bold transition-all cursor-pointer"
+                    >
+                      {copiedLink ? <Check className="w-3 h-3 text-emerald-400" /> : <Share2 className="w-3 h-3" />}
+                      <span>{copiedLink ? (language === 'ar' ? 'تم النسخ!' : 'Copied!') : (language === 'ar' ? 'مشاركة' : 'Share')}</span>
+                    </button>
                   </div>
                 </div>
 
-                <a
-                  href={selectedArticle.officialSourceUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-[11px] font-bold border border-slate-700 flex items-center gap-1 shrink-0"
-                >
-                  <span>sana.sy</span>
-                  <ExternalLink className="w-3 h-3" />
-                </a>
-              </div>
+                {/* Title & Timing */}
+                <div>
+                  <h3 className="text-base sm:text-lg font-black text-white leading-snug">
+                    {selectedArticle.titleAr}
+                  </h3>
+                  <p className="text-[11px] text-red-400 font-mono mt-0.5 flex items-center gap-1">
+                    <span>{selectedArticle.source}</span> • <span>{selectedArticle.relativeTimeAr}</span>
+                  </p>
+                </div>
 
-              {/* Tags */}
-              <div className="flex flex-wrap items-center gap-1.5 pt-2">
-                {selectedArticle.tags.map((tag, idx) => (
-                  <span key={idx} className="bg-slate-800 text-slate-300 text-xs px-2.5 py-1 rounded-lg border border-slate-700">
-                    #{tag}
-                  </span>
-                ))}
+                {/* Summary Highlight Box */}
+                <div className="bg-red-950/30 border border-red-500/30 p-3 rounded-xl text-slate-200 text-xs font-semibold leading-relaxed">
+                  {selectedArticle.summaryAr}
+                </div>
+
+                {/* Full Dispatch Content (Entire post text fully rendered without truncation) */}
+                <div
+                  className={`text-slate-200 leading-relaxed whitespace-pre-line ${
+                    fontSize === 'xlarge' ? 'text-sm sm:text-base' : fontSize === 'large' ? 'text-xs sm:text-sm' : 'text-xs'
+                  }`}
+                >
+                  {selectedArticle.contentAr}
+                </div>
+
+                {/* Interactive Star Rating Box */}
+                <div className="bg-slate-950/90 border border-slate-800/90 hover:border-amber-500/40 rounded-2xl p-3.5 sm:p-4 space-y-2.5 transition-all">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 bg-amber-500/15 text-amber-400 rounded-lg border border-amber-500/30">
+                        <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                      </div>
+                      <div>
+                        <span className="text-xs font-black text-white block">
+                          {language === 'ar' ? 'تقييم أهمية وجودة الخبر' : 'Rate this Article'}
+                        </span>
+                        <span className="text-[10px] text-slate-400">
+                          {language === 'ar' ? 'ما مدى فائدة وموثوقية هذا الخبر بالنسبة لك؟' : 'How useful & reliable was this official news dispatch?'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Aggregate stats badge */}
+                    <div className="flex items-center gap-1 text-[11px] font-mono font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                      <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                      <span>{((4.7 + ((ratings[selectedArticle.id] || 5) * 0.05))).toFixed(1)}</span>
+                      <span className="text-[9px] text-slate-400">({(140 + ((ratings[selectedArticle.id] ? 1 : 0))).toLocaleString()})</span>
+                    </div>
+                  </div>
+
+                  {/* 5 Stars Interactive Selector */}
+                  <div className="flex items-center justify-center gap-2 sm:gap-3 py-1">
+                    {[1, 2, 3, 4, 5].map((starNum) => {
+                      const userRating = ratings[selectedArticle.id] || 0;
+                      const isHighlighted = (hoveredStar || userRating) >= starNum;
+
+                      return (
+                        <button
+                          key={starNum}
+                          type="button"
+                          onMouseEnter={() => setHoveredStar(starNum)}
+                          onMouseLeave={() => setHoveredStar(0)}
+                          onClick={() => handleRateArticle(selectedArticle.id, starNum)}
+                          className="p-1 sm:p-1.5 transition-all transform hover:scale-125 active:scale-95 cursor-pointer focus:outline-none"
+                          title={`${starNum} / 5`}
+                        >
+                          <Star
+                            className={`w-6 h-6 sm:w-7 sm:h-7 transition-all ${
+                              isHighlighted
+                                ? 'fill-amber-400 text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)] scale-110'
+                                : 'text-slate-600 hover:text-slate-400'
+                            }`}
+                          />
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Rating Label / Feedback Display */}
+                  <div className="text-center text-[11px] min-h-[18px] flex items-center justify-center">
+                    {ratingToast ? (
+                      <span className="text-emerald-400 font-bold animate-fadeIn flex items-center justify-center gap-1 bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        {ratingToast}
+                      </span>
+                    ) : (hoveredStar || ratings[selectedArticle.id]) ? (
+                      <span className="text-slate-300 font-bold animate-fadeIn">
+                        {(hoveredStar || ratings[selectedArticle.id]) === 5 && (language === 'ar' ? '⭐️⭐️⭐️⭐️⭐️ ممتاز وموثق بدقة عالية' : 'Excellent & highly verified')}
+                        {(hoveredStar || ratings[selectedArticle.id]) === 4 && (language === 'ar' ? '⭐️⭐️⭐️⭐️ مهم ومفيد جداً' : 'Very good & informative')}
+                        {(hoveredStar || ratings[selectedArticle.id]) === 3 && (language === 'ar' ? '⭐️⭐️⭐️ جيد ومقبول' : 'Good & clear')}
+                        {(hoveredStar || ratings[selectedArticle.id]) === 2 && (language === 'ar' ? '⭐️⭐️ يحتاج تفاصيل أكثر' : 'Needs more details')}
+                        {(hoveredStar || ratings[selectedArticle.id]) === 1 && (language === 'ar' ? '⭐️ غير كافٍ' : 'Needs improvement')}
+                      </span>
+                    ) : (
+                      <span className="text-slate-400 text-[10.5px]">
+                        {language === 'ar' ? 'انقر على النجوم أعلاه لتسجيل تقييمك للخبر' : 'Click the stars above to submit your rating'}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Messaging & Social App Share Panel */}
+                <div className="bg-gradient-to-br from-slate-950 via-slate-950 to-red-950/30 border border-slate-800/90 rounded-2xl p-3.5 space-y-2.5 shadow-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <div className="p-1 bg-red-600/20 rounded-lg text-red-400 border border-red-500/30">
+                        <Share2 className="w-3.5 h-3.5 text-red-400" />
+                      </div>
+                      <span className="text-xs font-black text-white">
+                        {language === 'ar' ? 'مشاركة الخبر عبر تطبيقات المراسلة' : 'Share via Messaging Apps'}
+                      </span>
+                    </div>
+                    {copiedLink && (
+                      <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1 bg-emerald-950/70 px-2 py-0.5 rounded-full border border-emerald-500/30 animate-fadeIn">
+                        <Check className="w-3 h-3 text-emerald-400" />
+                        {language === 'ar' ? 'تم نسخ الرابط!' : 'Link copied!'}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Messaging Apps Share Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {/* WhatsApp */}
+                    <button
+                      type="button"
+                      onClick={() => shareToWhatsApp(selectedArticle)}
+                      className="flex items-center justify-center gap-1.5 py-2 px-2.5 bg-emerald-600/15 hover:bg-emerald-600/30 active:bg-emerald-600/40 text-emerald-400 hover:text-emerald-300 border border-emerald-500/40 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95"
+                      title="واتساب - WhatsApp"
+                    >
+                      <MessageCircle className="w-4 h-4 text-emerald-400" />
+                      <span>{language === 'ar' ? 'واتساب' : 'WhatsApp'}</span>
+                    </button>
+
+                    {/* Telegram */}
+                    <button
+                      type="button"
+                      onClick={() => shareToTelegram(selectedArticle)}
+                      className="flex items-center justify-center gap-1.5 py-2 px-2.5 bg-sky-600/15 hover:bg-sky-600/30 active:bg-sky-600/40 text-sky-400 hover:text-sky-300 border border-sky-500/40 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95"
+                      title="تيليغرام - Telegram"
+                    >
+                      <Send className="w-4 h-4 text-sky-400" />
+                      <span>{language === 'ar' ? 'تيليغرام' : 'Telegram'}</span>
+                    </button>
+
+                    {/* Native App Share (Messenger, Viber, SMS, etc) */}
+                    <button
+                      type="button"
+                      onClick={() => handleShare(selectedArticle)}
+                      className="flex items-center justify-center gap-1.5 py-2 px-2.5 bg-red-600/15 hover:bg-red-600/30 active:bg-red-600/40 text-red-400 hover:text-red-300 border border-red-500/40 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95"
+                      title={language === 'ar' ? 'تطبيقات أخرى' : 'Other Apps'}
+                    >
+                      <Share2 className="w-4 h-4 text-red-400" />
+                      <span>{language === 'ar' ? 'تطبيقات أخرى' : 'More Apps'}</span>
+                    </button>
+
+                    {/* Copy Link / Text */}
+                    <button
+                      type="button"
+                      onClick={() => copyArticleLink(selectedArticle)}
+                      className="flex items-center justify-center gap-1.5 py-2 px-2.5 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95"
+                      title={language === 'ar' ? 'نسخ الرابط والملخص' : 'Copy Link & Summary'}
+                    >
+                      {copiedLink ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-slate-300" />}
+                      <span>{copiedLink ? (language === 'ar' ? 'تم النسخ' : 'Copied') : (language === 'ar' ? 'نسخ الرابط' : 'Copy Link')}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Official Seal and Verification Stamp */}
+                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
+                    <div>
+                      <span className="font-extrabold text-white text-[11px] block">
+                        {language === 'ar' ? 'توثيق الوكالة العربية السورية للأنباء (سانا)' : 'Official SANA Agency Stamp'}
+                      </span>
+                      <span className="text-[10px] text-slate-400">
+                        {language === 'ar' ? 'برقية رسمية موثقة' : 'Verified official dispatch'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <a
+                    href={selectedArticle.officialSourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-[11px] font-bold border border-slate-700 flex items-center gap-1 shrink-0 self-end sm:self-auto"
+                  >
+                    <span>sana.sy</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+
+                {/* Tags */}
+                <div className="flex flex-wrap items-center gap-1 pt-1">
+                  {selectedArticle.tags.map((tag, idx) => (
+                    <span key={idx} className="bg-slate-800 text-slate-300 text-[10px] px-2 py-0.5 rounded-md border border-slate-700">
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
 
             {/* Modal Footer with Mobile Quick Next/Prev & Close */}
-            <div className="p-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between gap-2 shrink-0">
+            <div className="p-2.5 bg-slate-950 border-t border-slate-800 flex items-center justify-between gap-2 shrink-0">
               <button
                 type="button"
                 onClick={goToPrevArticle}
@@ -1189,9 +1380,9 @@ export const SyrianOfficialNewsSection: React.FC<SyrianOfficialNewsSectionProps>
                   setSelectedArticle(null);
                   setIsFullscreen(false);
                 }}
-                className="flex-1 py-2.5 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl text-xs transition-all shadow-lg shadow-red-600/20 cursor-pointer text-center"
+                className="flex-1 py-2 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl text-xs transition-all shadow-md cursor-pointer text-center"
               >
-                {language === 'ar' ? 'إغلاق الخبر' : 'Close Article'}
+                {language === 'ar' ? 'إغلاق' : 'Close'}
               </button>
 
               <button

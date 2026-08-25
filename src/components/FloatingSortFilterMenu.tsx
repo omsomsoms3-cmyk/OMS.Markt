@@ -44,7 +44,7 @@ export const FloatingSortFilterMenu: React.FC<FloatingSortFilterMenuProps> = ({
   return (
     <>
       {/* Sticky Ultra-Slim Top Bar */}
-      <div className="sticky top-16 z-20 bg-slate-900/95 backdrop-blur-md border border-slate-800/90 rounded-2xl shadow-md transition-all my-3 text-xs overflow-hidden dir-rtl">
+      <div className="sticky top-16 z-20 w-full max-w-7xl mx-auto bg-slate-900/95 backdrop-blur-md border border-slate-800/90 rounded-2xl shadow-md transition-all my-3 text-xs overflow-hidden dir-rtl">
         {/* Main Super Slim Single-Line Header */}
         <div className="flex items-center justify-between gap-2 px-3 py-1.5 bg-slate-950/80">
           {/* Left Badge & Title */}

@@ -29,7 +29,9 @@ import {
   FileSpreadsheet,
   Mic,
   MicOff,
-  Volume2
+  Volume2,
+  Smartphone,
+  ShoppingBag
 } from 'lucide-react';
 import { shareListingItem } from '../lib/share';
 import { broadcastNotification } from '../lib/messaging';
@@ -43,7 +45,7 @@ export const SavedListingsSection: React.FC = () => {
   const { bookmarks, removeBookmark, clearAllBookmarks, confirmBookmark, unconfirmBookmark } = useBookmarks();
   const { language, isRtl } = useLanguage();
 
-  const [filterType, setFilterType] = useState<'all' | 'car' | 'realestate' | 'job' | 'taxi'>('all');
+  const [filterType, setFilterType] = useState<'all' | 'car' | 'realestate' | 'job' | 'taxi' | 'news' | 'phone' | 'goods'>('all');
   const [confirmationFilter, setConfirmationFilter] = useState<'all' | 'confirmed' | 'pending'>('all');
   const [search, setSearch] = useState('');
   const [isListening, setIsListening] = useState(false);
@@ -174,6 +176,24 @@ export const SavedListingsSection: React.FC = () => {
           color: 'bg-purple-500/20 text-purple-300 border-purple-500/40',
           icon: <Truck className="w-3.5 h-3.5" />,
         };
+      case 'news':
+        return {
+          label: language === 'ar' ? 'أخبار رسمية' : 'Official News',
+          color: 'bg-rose-500/20 text-rose-300 border-rose-500/40',
+          icon: <FileText className="w-3.5 h-3.5" />,
+        };
+      case 'phone':
+        return {
+          label: language === 'ar' ? 'هواتف وأسعار' : 'Phones & Tech',
+          color: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40',
+          icon: <Smartphone className="w-3.5 h-3.5" />,
+        };
+      case 'goods':
+        return {
+          label: language === 'ar' ? 'سلع ومنتجات' : 'Syrian Goods',
+          color: 'bg-teal-500/20 text-teal-300 border-teal-500/40',
+          icon: <ShoppingBag className="w-3.5 h-3.5" />,
+        };
       default:
         return {
           label: language === 'ar' ? 'إعلان' : 'Listing',
@@ -251,6 +271,9 @@ export const SavedListingsSection: React.FC = () => {
             { id: 'realestate', label: language === 'ar' ? 'عقارات' : 'Real Estate', count: bookmarks.filter(b => b.itemType === 'realestate').length },
             { id: 'job', label: language === 'ar' ? 'وظائف' : 'Jobs', count: bookmarks.filter(b => b.itemType === 'job').length },
             { id: 'taxi', label: language === 'ar' ? 'تكسي وتوصيل' : 'Taxi', count: bookmarks.filter(b => b.itemType === 'taxi').length },
+            { id: 'news', label: language === 'ar' ? 'أخبار رسمية' : 'News', count: bookmarks.filter(b => b.itemType === 'news').length },
+            { id: 'phone', label: language === 'ar' ? 'هواتف وأسعار' : 'Phones', count: bookmarks.filter(b => b.itemType === 'phone').length },
+            { id: 'goods', label: language === 'ar' ? 'سلع ومنتجات' : 'Goods', count: bookmarks.filter(b => b.itemType === 'goods').length },
           ].map((tab) => (
             <button
               key={tab.id}

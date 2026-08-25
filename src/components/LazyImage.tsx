@@ -13,6 +13,7 @@ export const LazyImage: React.FC<LazyImageProps> = ({
   alt,
   className = '',
   containerClassName = '',
+  referrerPolicy = 'no-referrer',
   ...props
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -20,7 +21,7 @@ export const LazyImage: React.FC<LazyImageProps> = ({
 
   return (
     <div className={`relative overflow-hidden bg-slate-100 dark:bg-slate-950/80 ${containerClassName || 'w-full h-full'}`}>
-      {/* Skeleton Pulse Loader when loading */}
+      {/* Skeleton Pulse / Shimmer Loader when loading */}
       {!isLoaded && !hasError && (
         <div className="absolute inset-0 bg-gradient-to-r from-slate-200 via-slate-300 to-slate-200 dark:from-slate-900 dark:via-slate-800/80 dark:to-slate-900 animate-pulse flex items-center justify-center z-0">
           <Sparkles className="w-4 h-4 text-amber-500/40 animate-spin" />
@@ -39,6 +40,7 @@ export const LazyImage: React.FC<LazyImageProps> = ({
           alt={alt}
           loading="lazy"
           decoding="async"
+          referrerPolicy={referrerPolicy}
           onLoad={() => setIsLoaded(true)}
           onError={() => setHasError(true)}
           className={`${className} ${
@@ -50,3 +52,4 @@ export const LazyImage: React.FC<LazyImageProps> = ({
     </div>
   );
 };
+

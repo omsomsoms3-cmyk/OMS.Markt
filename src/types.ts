@@ -79,7 +79,7 @@ export interface SyrianOfficialNewsItem {
 
 export interface SavedListingItem {
   id: string;
-  itemType: 'car' | 'realestate' | 'job' | 'taxi';
+  itemType: 'car' | 'realestate' | 'news' | 'job' | 'taxi' | 'phone' | 'goods' | 'general';
   title: string;
   subtitle: string;
   city: string;

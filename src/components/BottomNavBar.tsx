@@ -60,21 +60,21 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/98 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/90 dark:border-slate-800 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] px-2 py-1 transition-colors duration-300">
-      <div className="max-w-md mx-auto flex items-center justify-around relative">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 flex justify-center items-center pointer-events-none pb-safe px-2 transition-all duration-300">
+      <div className="w-full max-w-lg mx-auto pointer-events-auto bg-white/98 dark:bg-slate-900/98 backdrop-blur-2xl border-t sm:border border-slate-200/90 dark:border-slate-800/90 shadow-[0_-4px_25px_rgba(0,0,0,0.15)] rounded-t-2xl sm:rounded-2xl sm:mb-2 px-2 py-1.5 flex items-center justify-between relative">
         {navItems.map((item) => {
           if (item.isAction) {
             return (
               <button
                 key={item.id}
                 onClick={onOpenCreateAd}
-                className="flex flex-col items-center justify-center -mt-4.5 group cursor-pointer"
+                className="flex-1 flex flex-col items-center justify-center -mt-5 group cursor-pointer min-h-[50px]"
                 title={language === 'ar' ? 'إضافة إعلان جديد (Inserieren)' : 'Post Ad (Inserieren)'}
               >
-                <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-emerald-500 via-emerald-600 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-white flex items-center justify-center shadow-md shadow-emerald-500/30 border-2 border-white dark:border-slate-900 group-active:scale-90 transition-all">
-                  <PlusCircle className="w-6 h-6 stroke-[2.2]" />
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-500 via-emerald-600 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-white flex items-center justify-center shadow-lg shadow-emerald-500/35 border-2 border-white dark:border-slate-900 group-active:scale-90 transition-all duration-200">
+                  <PlusCircle className="w-6 h-6 stroke-[2.4]" />
                 </div>
-                <span className="text-[9.5px] font-extrabold text-emerald-700 dark:text-emerald-400 mt-0.5 tracking-tight">
+                <span className="text-[10px] font-black text-emerald-700 dark:text-emerald-400 mt-1 tracking-tight text-center">
                   {language === 'ar' ? item.labelAr : item.labelEn}
                 </span>
               </button>
@@ -86,12 +86,12 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               <button
                 key={item.id}
                 onClick={onOpenProfile}
-                className="flex flex-col items-center justify-center py-0.5 px-2 text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer group"
+                className="flex-1 flex flex-col items-center justify-center py-1 px-1 text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer group min-h-[46px]"
               >
-                <div className="relative p-1 rounded-xl group-hover:bg-slate-100 dark:group-hover:bg-slate-800 transition-colors">
-                  <User className="w-4.5 h-4.5 stroke-[2]" />
+                <div className="relative p-1 rounded-xl flex items-center justify-center group-hover:bg-slate-100 dark:group-hover:bg-slate-800 transition-colors">
+                  <User className="w-5 h-5 stroke-[2]" />
                 </div>
-                <span className="text-[9.5px] font-bold mt-0.5">
+                <span className="text-[10px] font-bold mt-0.5 text-center truncate max-w-full">
                   {language === 'ar' ? item.labelAr : item.labelEn}
                 </span>
               </button>
@@ -105,29 +105,29 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id as TabType)}
-              className={`flex flex-col items-center justify-center py-0.5 px-2 transition-colors cursor-pointer relative ${
+              className={`flex-1 flex flex-col items-center justify-center py-1 px-1 transition-colors cursor-pointer relative min-h-[46px] ${
                 isActive
                   ? 'text-emerald-600 dark:text-emerald-400 font-bold'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
-              <div className={`relative p-1 rounded-xl transition-all ${
+              <div className={`relative p-1 rounded-xl flex items-center justify-center transition-all ${
                 isActive ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : ''
               }`}>
-                <Icon className={`w-4.5 h-4.5 ${isActive ? 'stroke-[2.4]' : 'stroke-[1.8]'}`} />
+                <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.4]' : 'stroke-[1.8]'}`} />
                 {item.badge !== undefined && (
-                  <span className="absolute -top-1 -right-1 bg-amber-500 text-slate-950 font-black text-[8.5px] min-w-[14px] h-3.5 px-0.5 rounded-full flex items-center justify-center shadow-sm border border-white dark:border-slate-900 animate-pulse">
+                  <span className="absolute -top-1 -right-1.5 bg-amber-500 text-slate-950 font-black text-[9px] min-w-[15px] h-3.5 px-0.5 rounded-full flex items-center justify-center shadow-xs border border-white dark:border-slate-900 animate-pulse">
                     {item.badge}
                   </span>
                 )}
               </div>
-              <span className="text-[9.5px] font-bold mt-0.5">
+              <span className="text-[10px] font-bold mt-0.5 text-center truncate max-w-full">
                 {language === 'ar' ? item.labelAr : item.labelEn}
               </span>
 
               {/* Top Active Indicator Line */}
               {isActive && (
-                <span className="absolute -top-1 w-5 h-0.5 bg-emerald-500 rounded-full animate-fadeIn" />
+                <span className="absolute -top-1 w-6 h-0.5 bg-emerald-500 rounded-full animate-fadeIn" />
               )}
             </button>
           );

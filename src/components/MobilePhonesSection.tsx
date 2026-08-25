@@ -40,6 +40,7 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useBookmarks } from '../context/BookmarkContext';
 import { MobilePhoneItem, TechProductItem, PhoneBrand } from '../types';
 import {
   PHONE_BRANDS_LIST,
@@ -55,6 +56,7 @@ import {
   MinuteSyncStatus,
   CustomPhoneCalculationResult
 } from '../lib/mobilePhonesService';
+import { LazyImage } from './LazyImage';
 
 interface MobilePhonesSectionProps {
   searchQuery?: string;
@@ -101,6 +103,7 @@ export const MobilePhonesSection: React.FC<MobilePhonesSectionProps> = ({
   const [calcResult, setCalcResult] = useState<CustomPhoneCalculationResult>(() =>
     calculateSyrianPhoneCustoms(850, marketUsdRate)
   );
+  const { isBookmarked, toggleBookmark: toggleGlobalBookmark } = useBookmarks();
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [savedPhoneIds, setSavedPhoneIds] = useState<string[]>(() => {
     try {
@@ -147,10 +150,31 @@ export const MobilePhonesSection: React.FC<MobilePhonesSectionProps> = ({
     }, 500);
   };
 
-  const toggleBookmark = (id: string, e?: React.MouseEvent) => {
+  const isPhoneSaved = (id: string) => {
+    return isBookmarked(id) || savedPhoneIds.includes(id);
+  };
+
+  const toggleBookmark = (phoneOrId: MobilePhoneItem | string, e?: React.MouseEvent) => {
     e?.stopPropagation();
+    const phone = typeof phoneOrId === 'string' ? phones.find((p) => p.id === phoneOrId) : phoneOrId;
+    if (!phone) return;
+
+    toggleGlobalBookmark({
+      id: phone.id,
+      itemType: 'phone',
+      title: `${phone.brand} ${phone.modelNameAr}`,
+      subtitle: `${phone.storage} • ${phone.ram} • ${phone.isOfficialCustoms ? 'مجمرك رسمي' : 'غير مجمرك'} • ${phone.warrantyAr}`,
+      city: 'سورية - كافة المحافظات',
+      priceUSD: phone.priceUSD + (phone.isOfficialCustoms ? phone.customsTaxUSD : 0),
+      priceSYP: phone.totalWithCustomsSYP,
+      image: phone.image,
+      phone: '0944000000',
+      savedAt: new Date().toLocaleDateString('ar-SY'),
+      originalData: phone,
+    });
+
     setSavedPhoneIds((prev) => {
-      const updated = prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id];
+      const updated = prev.includes(phone.id) ? prev.filter((i) => i !== phone.id) : [...prev, phone.id];
       try {
         localStorage.setItem('oms_saved_phones', JSON.stringify(updated));
       } catch {}
@@ -291,51 +315,6 @@ export const MobilePhonesSection: React.FC<MobilePhonesSectionProps> = ({
     }
   }, [currentPhoneIndex, filteredPhones]);
 
-  // Touch & Mouse Drag State for Left/Right Swiping
-  const [dragOffset, setDragOffset] = useState<number>(0);
-  const [isDragging, setIsDragging] = useState<boolean>(false);
-  const dragStartXRef = useRef<number | null>(null);
-  const isPointerDownRef = useRef<boolean>(false);
-
-  const handleDragStart = (clientX: number) => {
-    dragStartXRef.current = clientX;
-    isPointerDownRef.current = true;
-    setIsDragging(true);
-  };
-
-  const handleDragMove = (clientX: number) => {
-    if (!isPointerDownRef.current || dragStartXRef.current === null) return;
-    const diff = clientX - dragStartXRef.current;
-    if (Math.abs(diff) < 260) {
-      setDragOffset(diff);
-    }
-  };
-
-  const handleDragEnd = () => {
-    if (!isPointerDownRef.current) return;
-    isPointerDownRef.current = false;
-    setIsDragging(false);
-    
-    // Swipe threshold
-    if (dragOffset > 55) {
-      // Swiped right
-      if (isRtl) {
-        goToPrevPhone();
-      } else {
-        goToNextPhone();
-      }
-    } else if (dragOffset < -55) {
-      // Swiped left
-      if (isRtl) {
-        goToNextPhone();
-      } else {
-        goToPrevPhone();
-      }
-    }
-    setDragOffset(0);
-    dragStartXRef.current = null;
-  };
-
   // Keyboard navigation when phone modal is open
   useEffect(() => {
     if (!selectedPhoneForModal) return;
@@ -355,38 +334,38 @@ export const MobilePhonesSection: React.FC<MobilePhonesSectionProps> = ({
   }, [selectedPhoneForModal, goToNextPhone, goToPrevPhone, isRtl]);
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto px-3 sm:px-4 py-4">
+    <div className="space-y-6 max-w-7xl mx-auto px-3 sm:px-4 py-4 w-full max-w-full overflow-x-hidden">
       {/* Master Minute-by-Minute Ticker Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-indigo-950/80 border border-indigo-500/40 rounded-3xl p-5 sm:p-7 shadow-2xl relative overflow-hidden">
+      <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-indigo-950/80 border border-indigo-500/40 rounded-3xl p-4 sm:p-7 shadow-2xl relative overflow-hidden w-full">
         {/* Background Ambient Glow */}
         <div className="absolute -right-8 -top-8 w-44 h-44 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute right-8 bottom-1 text-slate-800/20 font-black text-6xl select-none pointer-events-none font-mono">
-          PHONES LIVE
+        <div className="absolute right-8 bottom-1 text-slate-800/20 font-black text-5xl sm:text-6xl select-none pointer-events-none font-mono">
+          PHONES
         </div>
 
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
-          <div className="flex items-start gap-4">
-            <div className="p-3 bg-indigo-600/20 text-indigo-400 rounded-2xl border border-indigo-500/40 shrink-0 shadow-lg shadow-indigo-500/10">
-              <Smartphone className="w-8 h-8 text-indigo-400 animate-pulse" />
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sm:gap-5">
+          <div className="flex items-start gap-3 sm:gap-4 min-w-0">
+            <div className="p-2.5 sm:p-3 bg-indigo-600/20 text-indigo-400 rounded-2xl border border-indigo-500/40 shrink-0 shadow-lg shadow-indigo-500/10">
+              <Smartphone className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-400 animate-pulse" />
             </div>
-            <div className="space-y-1.5">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black text-[11px] px-3 py-0.5 rounded-full shadow-md flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-slate-950 animate-ping" />
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1">
+                <span className="bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black text-[10px] sm:text-[11px] px-2.5 py-0.5 rounded-full shadow-md flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-950 animate-ping" />
                   {language === 'ar' ? 'تحديث دقيقة بدقيقة ⚡️' : 'Minute-by-Minute Live ⚡️'}
                 </span>
-                <span className="bg-slate-800 text-slate-300 text-[10px] px-2.5 py-0.5 rounded-full border border-slate-700 font-bold flex items-center gap-1">
+                <span className="bg-slate-800 text-slate-300 text-[10px] px-2 py-0.5 rounded-full border border-slate-700 font-bold flex items-center gap-1">
                   <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />
-                  {language === 'ar' ? 'شامل الجمركة والكفالات السورية' : 'Includes Customs & Syrian Warranties'}
+                  {language === 'ar' ? 'شامل الجمركة' : 'Includes Customs'}
                 </span>
               </div>
 
-              <h2 className="text-xl sm:text-2xl font-black text-white leading-snug">
+              <h2 className="text-base sm:text-xl md:text-2xl font-black text-white leading-snug break-words">
                 {language === 'ar'
                   ? 'بورصة أسعار الهواتف والمنتجات في سورية (دقيقة بدقيقة)'
                   : 'Live Syrian Mobile Phone & Tech Product Prices (Minute by Minute)'}
               </h2>
-              <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+              <p className="text-[11px] sm:text-xs text-slate-300 max-w-2xl leading-relaxed break-words mt-1">
                 {language === 'ar'
                   ? 'أسعار فورية لكافة أجهزة آبل وسامسونج وشاومي وإنفينيكس وتكنو وريلمي وهونر، مع احتساب رسمي لرسوم الجمركة والتصريح الجمركي وربط مباشر بسعر صرف الليرة السورية.'
                   : 'Real-time prices for iPhone, Samsung, Xiaomi, Infinix, Tecno & Realme with Syrian customs fees linked to live USD exchange rate.'}
@@ -641,7 +620,7 @@ export const MobilePhonesSection: React.FC<MobilePhonesSectionProps> = ({
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {filteredPhones.map((phone) => {
-                const isSaved = savedPhoneIds.includes(phone.id);
+                const isSaved = isPhoneSaved(phone.id);
                 const isCopied = copiedId === phone.id;
                 const avgInfo = getPhoneAverageMarketInfo(phone);
 
@@ -653,11 +632,10 @@ export const MobilePhonesSection: React.FC<MobilePhonesSectionProps> = ({
                   >
                     {/* Card Header & Product Image */}
                     <div className="relative h-48 w-full bg-slate-950 overflow-hidden flex items-center justify-center p-3">
-                      <img
+                      <LazyImage
                         src={phone.image}
                         alt={phone.modelNameAr}
                         className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300"
-                        referrerPolicy="no-referrer"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent pointer-events-none" />
 
@@ -676,7 +654,7 @@ export const MobilePhonesSection: React.FC<MobilePhonesSectionProps> = ({
                       <div className="absolute top-2.5 left-2.5 flex items-center gap-1">
                         <button
                           type="button"
-                          onClick={(e) => toggleBookmark(phone.id, e)}
+                          onClick={(e) => toggleBookmark(phone, e)}
                           className={`p-1.5 rounded-lg border backdrop-blur-md transition-all cursor-pointer ${
                             isSaved
                               ? 'bg-amber-500/20 text-amber-400 border-amber-500/50'
@@ -829,11 +807,10 @@ export const MobilePhonesSection: React.FC<MobilePhonesSectionProps> = ({
               >
                 <div className="flex gap-3">
                   <div className="w-24 h-24 bg-slate-950 rounded-xl overflow-hidden shrink-0 border border-slate-800 flex items-center justify-center p-1.5">
-                    <img
+                    <LazyImage
                       src={item.image}
                       alt={item.nameAr}
                       className="max-h-full max-w-full object-contain"
-                      referrerPolicy="no-referrer"
                     />
                   </div>
                   <div className="space-y-1 flex-1">
@@ -1015,83 +992,74 @@ export const MobilePhonesSection: React.FC<MobilePhonesSectionProps> = ({
             <ChevronRight className="w-6 h-6" />
           </button>
 
-          {/* Centered Modal Container with Interactive Drag Translation */}
+          {/* Centered Modal Container (Purely Vertical Scroll, Compact & Centered) */}
           <div 
-            onTouchStart={(e) => handleDragStart(e.touches[0].clientX)}
-            onTouchMove={(e) => handleDragMove(e.touches[0].clientX)}
-            onTouchEnd={handleDragEnd}
-            onMouseDown={(e) => handleDragStart(e.clientX)}
-            onMouseMove={(e) => handleDragMove(e.clientX)}
-            onMouseUp={handleDragEnd}
-            onMouseLeave={handleDragEnd}
-            style={{
-              transform: dragOffset ? `translateX(${dragOffset}px) rotate(${dragOffset * 0.02}deg)` : undefined,
-              transition: isDragging ? 'none' : 'transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1)',
-              cursor: isDragging ? 'grabbing' : 'default'
-            }}
-            className="relative bg-slate-900 border border-slate-700 rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl my-auto animate-fadeIn max-h-[90vh] flex flex-col mx-auto select-none"
+            className="relative bg-slate-900 border border-slate-700 rounded-2xl w-[calc(100%-1rem)] max-w-md overflow-hidden shadow-2xl my-auto animate-fadeIn max-h-[82vh] flex flex-col mx-auto select-none"
           >
-            {/* Top Drag & Swipe Interactive Banner */}
-            <div className="bg-slate-950/95 px-4 py-2 border-b border-slate-800 flex items-center justify-between text-xs text-slate-300">
-              <div className="flex items-center gap-1.5 text-[11px] text-indigo-400 font-bold">
-                <MoveHorizontal className="w-3.5 h-3.5 animate-pulse" />
-                <span>
-                  {language === 'ar' ? 'اسحب لليمين أو اليسار لتصفح باقي الهواتف' : 'Swipe or drag left/right to browse phones'}
+            {/* Top Navigation Bar */}
+            <div className="bg-slate-950 px-3 py-2 border-b border-slate-800 flex items-center justify-between text-xs text-slate-300 shrink-0">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse shrink-0"></span>
+                <span className="font-bold text-white text-[11px] sm:text-xs truncate">
+                  {language === 'ar' ? 'تفاصيل ومواصفات الهاتف' : 'Phone Specifications'}
                 </span>
               </div>
 
-              {/* Counter Indicator */}
-              <div className="flex items-center gap-1 bg-slate-900 px-2.5 py-0.5 rounded-full border border-slate-700 font-mono text-[11px] font-bold text-slate-300">
-                <span>{currentPhoneIndex >= 0 ? currentPhoneIndex + 1 : 1}</span>
-                <span className="text-slate-500">/</span>
-                <span>{filteredPhones.length}</span>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {/* Counter Indicator */}
+                <div className="flex items-center gap-1 bg-slate-900 px-1.5 py-0.5 rounded-full border border-slate-700 font-mono text-[10px] font-bold text-slate-300">
+                  <span>{currentPhoneIndex >= 0 ? currentPhoneIndex + 1 : 1}</span>
+                  <span className="text-slate-500">/</span>
+                  <span>{filteredPhones.length}</span>
+                </div>
+
+                {/* Direct Close Button */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedPhoneForModal(null)}
+                  className="w-6 h-6 rounded-full bg-slate-800 hover:bg-red-600 text-slate-300 hover:text-white flex items-center justify-center text-xs transition-colors cursor-pointer"
+                  title={language === 'ar' ? 'إغلاق' : 'Close'}
+                >
+                  ✕
+                </button>
               </div>
             </div>
 
-            {/* Modal Header */}
-            <div className="relative h-56 w-full bg-slate-950 shrink-0 flex items-center justify-center p-4">
-              <img
+            {/* Modal Header & Image */}
+            <div className="relative h-32 sm:h-36 w-full bg-slate-950 shrink-0 flex items-center justify-center p-2.5">
+              <LazyImage
                 src={selectedPhoneForModal.image}
                 alt={selectedPhoneForModal.modelNameAr}
                 className="max-h-full max-w-full object-contain pointer-events-none"
-                referrerPolicy="no-referrer"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-black/60 pointer-events-none" />
 
-              <button
-                type="button"
-                onClick={() => setSelectedPhoneForModal(null)}
-                className="absolute top-4 left-4 w-9 h-9 rounded-full bg-slate-950/80 hover:bg-slate-800 text-white flex items-center justify-center border border-slate-700 transition-all cursor-pointer shadow-lg z-20"
-              >
-                ✕
-              </button>
-
-              <div className="absolute top-4 right-4 flex items-center gap-2 z-20">
-                <span className="bg-indigo-600 text-white text-xs font-black px-3 py-1 rounded-full shadow-lg">
+              <div className="absolute top-2 right-2 flex items-center gap-1 z-20">
+                <span className="bg-indigo-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg">
                   {selectedPhoneForModal.brand}
                 </span>
-                <span className="bg-emerald-500 text-slate-950 text-xs font-black px-2.5 py-1 rounded-full shadow-lg">
+                <span className="bg-emerald-500 text-slate-950 text-[9px] font-black px-1.5 py-0.5 rounded-full shadow-lg">
                   مجمرك رسمي 🛡️
                 </span>
               </div>
 
-              <div className="absolute bottom-3 right-4 left-4 flex items-center justify-between text-xs text-slate-200 pointer-events-none">
-                <span className="bg-slate-950/80 px-2.5 py-1 rounded-lg border border-slate-700 font-mono font-bold">
+              <div className="absolute bottom-2 right-2 left-2 flex items-center justify-between text-[10px] text-slate-200 pointer-events-none">
+                <span className="bg-slate-950/80 px-2 py-0.5 rounded-lg border border-slate-700 font-mono font-bold text-[10px]">
                   {selectedPhoneForModal.storage} • {selectedPhoneForModal.ram} RAM
                 </span>
-                <span className="font-mono text-emerald-400 bg-slate-950/80 px-2.5 py-1 rounded-lg font-black text-sm">
+                <span className="font-mono text-emerald-400 bg-slate-950/80 px-2 py-0.5 rounded-lg font-black text-[10px]">
                   {selectedPhoneForModal.totalWithCustomsSYP.toLocaleString()} ل.س
                 </span>
               </div>
             </div>
 
-            {/* Modal Scrollable Body */}
-            <div className="p-5 sm:p-6 overflow-y-auto space-y-4 flex-1 select-text">
+            {/* Modal Scrollable Body (Vertical Only) */}
+            <div className="p-3 sm:p-4 overflow-y-auto space-y-3 flex-1 select-text">
               <div>
-                <h3 className="text-lg sm:text-xl font-black text-white leading-snug">
+                <h3 className="text-base sm:text-lg font-black text-white leading-snug">
                   {selectedPhoneForModal.modelNameAr}
                 </h3>
-                <p className="text-xs text-indigo-400 font-mono mt-0.5">
+                <p className="text-[11px] text-indigo-400 font-mono mt-0.5">
                   {selectedPhoneForModal.modelNameEn} • {selectedPhoneForModal.network} • {selectedPhoneForModal.colorAr}
                 </p>
               </div>
@@ -1100,21 +1068,21 @@ export const MobilePhonesSection: React.FC<MobilePhonesSectionProps> = ({
               {(() => {
                 const modalAvg = getPhoneAverageMarketInfo(selectedPhoneForModal);
                 return (
-                  <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2.5 text-xs">
-                    <h4 className="font-extrabold text-white text-xs flex items-center justify-between pb-2 border-b border-slate-800">
+                  <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2 text-xs">
+                    <h4 className="font-extrabold text-white text-[11px] flex items-center justify-between pb-1.5 border-b border-slate-800">
                       <div className="flex items-center gap-1.5">
                         <ShieldCheck className="w-4 h-4 text-emerald-400" />
                         <span>{language === 'ar' ? 'متوسط السعر والجمركة السورية الرسمية ⚖️' : 'Syrian Average Price & Official Customs'}</span>
                       </div>
-                      <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-bold">
+                      <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded-full font-bold">
                         {language === 'ar' ? 'متوسط دقيق' : 'Fair Average'}
                       </span>
                     </h4>
 
-                    <div className="grid grid-cols-2 gap-3 pt-1">
+                    <div className="grid grid-cols-2 gap-2 pt-0.5">
                       <div>
-                        <span className="text-slate-400 block text-[11px]">{language === 'ar' ? 'متوسط السعر مجمرك نظامي:' : 'Average Customed Price:'}</span>
-                        <span className="font-mono font-black text-emerald-400 text-sm">
+                        <span className="text-slate-400 block text-[10px]">{language === 'ar' ? 'متوسط السعر مجمرك نظامي:' : 'Average Customed Price:'}</span>
+                        <span className="font-mono font-black text-emerald-400 text-xs sm:text-sm">
                           {modalAvg.avgTotalWithCustomsSYP.toLocaleString()} ل.س
                         </span>
                         <span className="text-[10px] text-slate-400 block font-mono">
@@ -1123,8 +1091,8 @@ export const MobilePhonesSection: React.FC<MobilePhonesSectionProps> = ({
                       </div>
 
                       <div>
-                        <span className="text-slate-400 block text-[11px]">{language === 'ar' ? 'رسم الجمركة والتصريح السوري:' : 'Customs Fee:'}</span>
-                        <span className="font-mono font-bold text-amber-400 text-sm">
+                        <span className="text-slate-400 block text-[10px]">{language === 'ar' ? 'رسم الجمركة والتصريح السوري:' : 'Customs Fee:'}</span>
+                        <span className="font-mono font-bold text-amber-400 text-xs sm:text-sm">
                           {selectedPhoneForModal.customsTaxSYP.toLocaleString()} ل.س
                         </span>
                         <span className="text-[10px] text-slate-400 block font-mono">
@@ -1134,21 +1102,21 @@ export const MobilePhonesSection: React.FC<MobilePhonesSectionProps> = ({
                     </div>
 
                     {/* Regional Spread */}
-                    <div className="bg-slate-900/80 p-2 rounded-xl border border-slate-800/80 flex items-center justify-between text-[11px]">
+                    <div className="bg-slate-900/80 p-1.5 rounded-lg border border-slate-800/80 flex items-center justify-between text-[10px]">
                       <span className="text-slate-300 font-bold">{language === 'ar' ? 'النطاق السعري في المحافظات:' : 'Syrian Market Spread:'}</span>
                       <span className="font-mono text-cyan-400 font-bold">
                         {(modalAvg.minTotalWithCustomsSYP / 1000000).toFixed(2)}M - {(modalAvg.maxTotalWithCustomsSYP / 1000000).toFixed(2)}M ل.س
                       </span>
                     </div>
 
-                    <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
+                    <div className="pt-1.5 border-t border-slate-800/80 flex items-center justify-between text-[10px]">
                       <span className="text-slate-400">{language === 'ar' ? 'السعر العالمي بدون جمركة:' : 'Global Price Without Customs:'}</span>
                       <span className="font-mono text-slate-300">
                         {selectedPhoneForModal.priceWithoutCustomsSYP.toLocaleString()} ل.س (${selectedPhoneForModal.priceUSD})
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between text-[11px]">
+                    <div className="flex items-center justify-between text-[10px]">
                       <span className="text-slate-400">{language === 'ar' ? 'الضمان والوكيل المعتمد:' : 'Official Warranty:'}</span>
                       <span className="text-indigo-400 font-bold">{selectedPhoneForModal.warrantyAr}</span>
                     </div>
@@ -1157,29 +1125,29 @@ export const MobilePhonesSection: React.FC<MobilePhonesSectionProps> = ({
               })()}
 
               {/* Technical Specifications */}
-              <div className="space-y-2 text-xs">
-                <h4 className="font-extrabold text-white flex items-center gap-1.5">
-                  <Cpu className="w-4 h-4 text-cyan-400" />
+              <div className="space-y-1.5 text-xs">
+                <h4 className="font-extrabold text-white text-[11px] flex items-center gap-1.5">
+                  <Cpu className="w-3.5 h-3.5 text-cyan-400" />
                   <span>{language === 'ar' ? 'المواصفات الفنية والتقنية الكاملة' : 'Full Specifications'}</span>
                 </h4>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
-                  <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 space-y-0.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[10px]">
+                  <div className="bg-slate-950 p-2 rounded-lg border border-slate-800 space-y-0.5">
                     <span className="text-slate-400 block">{language === 'ar' ? 'الشاشة:' : 'Screen:'}</span>
                     <span className="font-semibold text-slate-200">{selectedPhoneForModal.screen}</span>
                   </div>
 
-                  <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 space-y-0.5">
+                  <div className="bg-slate-950 p-2 rounded-lg border border-slate-800 space-y-0.5">
                     <span className="text-slate-400 block">{language === 'ar' ? 'المعالج:' : 'Processor:'}</span>
                     <span className="font-semibold text-slate-200">{selectedPhoneForModal.processor}</span>
                   </div>
 
-                  <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 space-y-0.5">
+                  <div className="bg-slate-950 p-2 rounded-lg border border-slate-800 space-y-0.5">
                     <span className="text-slate-400 block">{language === 'ar' ? 'الكاميرا:' : 'Camera:'}</span>
                     <span className="font-semibold text-slate-200">{selectedPhoneForModal.camera}</span>
                   </div>
 
-                  <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 space-y-0.5">
+                  <div className="bg-slate-950 p-2 rounded-lg border border-slate-800 space-y-0.5">
                     <span className="text-slate-400 block">{language === 'ar' ? 'البطارية والشحن:' : 'Battery:'}</span>
                     <span className="font-semibold text-slate-200">{selectedPhoneForModal.battery}</span>
                   </div>
@@ -1187,10 +1155,10 @@ export const MobilePhonesSection: React.FC<MobilePhonesSectionProps> = ({
               </div>
 
               {/* Governorates Popularity */}
-              <div className="pt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
+              <div className="pt-1 flex flex-wrap items-center gap-1 text-[10px]">
                 <span className="text-slate-400">{language === 'ar' ? 'متوفر ومطلوب في:' : 'Available in:'}</span>
                 {selectedPhoneForModal.popularInCities.map((c, idx) => (
-                  <span key={idx} className="bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md border border-slate-700">
+                  <span key={idx} className="bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded-md border border-slate-700">
                     📍 {c}
                   </span>
                 ))}
@@ -1198,7 +1166,7 @@ export const MobilePhonesSection: React.FC<MobilePhonesSectionProps> = ({
             </div>
 
             {/* Modal Footer Controls with Quick Prev/Next & Action buttons */}
-            <div className="p-3.5 bg-slate-950 border-t border-slate-800 flex items-center justify-between gap-2">
+            <div className="p-2.5 bg-slate-950 border-t border-slate-800 flex items-center justify-between gap-2 shrink-0">
               <button
                 type="button"
                 onClick={goToPrevPhone}
@@ -1210,17 +1178,31 @@ export const MobilePhonesSection: React.FC<MobilePhonesSectionProps> = ({
 
               <button
                 type="button"
+                onClick={(e) => toggleBookmark(selectedPhoneForModal, e)}
+                className={`px-2.5 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-1 cursor-pointer ${
+                  isPhoneSaved(selectedPhoneForModal.id)
+                    ? 'bg-amber-500/20 text-amber-400 border-amber-500/40 shadow-sm'
+                    : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'
+                }`}
+                title={language === 'ar' ? 'حفظ في المفضلة' : 'Save to Bookmarks'}
+              >
+                <Bookmark className={`w-3.5 h-3.5 ${isPhoneSaved(selectedPhoneForModal.id) ? 'fill-amber-400' : ''}`} />
+                <span className="hidden sm:inline">{isPhoneSaved(selectedPhoneForModal.id) ? (language === 'ar' ? 'محفوظ' : 'Saved') : (language === 'ar' ? 'حفظ' : 'Bookmark')}</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={(e) => handleSharePhone(selectedPhoneForModal, e)}
-                className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition-all border border-slate-700 flex items-center gap-1.5 cursor-pointer"
+                className="px-2.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition-all border border-slate-700 flex items-center gap-1 cursor-pointer"
               >
                 <Share2 className="w-3.5 h-3.5 text-indigo-400" />
-                <span className="hidden sm:inline">{language === 'ar' ? 'مشاركة السعر' : 'Share'}</span>
+                <span className="hidden sm:inline">{language === 'ar' ? 'مشاركة' : 'Share'}</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setSelectedPhoneForModal(null)}
-                className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition-all shadow-lg shadow-indigo-600/20 cursor-pointer text-center"
+                className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition-all shadow-md cursor-pointer text-center"
               >
                 {language === 'ar' ? 'إغلاق' : 'Close'}
               </button>

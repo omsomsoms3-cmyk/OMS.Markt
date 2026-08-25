@@ -99,11 +99,18 @@ function MainAppContent() {
   const handleAddListing = (newAd: CarListing) => {
     initialCarListings.unshift(newAd);
     setActiveTab('cars');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleTabChange = (newTab: TabType) => {
+    setActiveTab(newTab);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSelectCategory = (categoryId: CategoryItemId, tab: TabType) => {
     setSelectedCategory(categoryId);
     setActiveTab(tab);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     if (categoryId === 'realestate_sale') {
       setRealEstateFilterType('sale');
     } else if (categoryId === 'realestate_rent') {
@@ -117,7 +124,7 @@ function MainAppContent() {
 
   return (
     <div
-      className={`min-h-screen transition-all duration-500 flex flex-col font-sans selection:bg-emerald-600 selection:text-white pb-20 ${
+      className={`min-h-screen w-full max-w-full overflow-x-hidden relative transition-all duration-500 flex flex-col font-sans selection:bg-emerald-600 selection:text-white pb-20 ${
         appMode === 'essential'
           ? isDark
             ? 'bg-gradient-to-b from-slate-950 via-sky-950/30 to-slate-950 text-sky-100'
@@ -149,7 +156,7 @@ function MainAppContent() {
       {/* Shared Header Navigation */}
       <Navbar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleTabChange}
         selectedCategory={selectedCategory}
         onSelectCategory={handleSelectCategory}
         userEmail={currentUserEmail}
@@ -170,10 +177,10 @@ function MainAppContent() {
 
       {/* Prominent Live Exchange & Gold Rates Ticker Bar (Slim in Easy Mode, Full in Pro Mode) */}
       {appMode === 'essential' ? (
-        <CurrencyGoldTicker isSlim onNavigateToCurrency={() => setActiveTab('currency')} />
+        <CurrencyGoldTicker isSlim onNavigateToCurrency={() => handleTabChange('currency')} />
       ) : (
         (appMode === 'advanced' || activeTab === 'currency') && (
-          <CurrencyGoldTicker onNavigateToCurrency={() => setActiveTab('currency')} />
+          <CurrencyGoldTicker onNavigateToCurrency={() => handleTabChange('currency')} />
         )
       )}
 
@@ -205,62 +212,66 @@ function MainAppContent() {
         </div>
       )}
 
-      {/* Main Content Body */}
-      <main className="flex-1 flex flex-col pb-24 sm:pb-28">
+      {/* Main Content Body with Smooth Section Transition */}
+      <main className="w-full flex-1 flex flex-col items-center justify-start pb-24 sm:pb-28">
         {/* Dedicated Non-Intrusive Google AdSense Placement */}
         {appMode === 'advanced' && activeTab !== 'embed' && (
-          <div className="max-w-7xl mx-auto w-full px-4 pt-3">
+          <div className="max-w-7xl mx-auto w-full px-2 sm:px-4 pt-3 flex justify-center">
             <GoogleAdSenseSlot slotId="ca-pub-9988776655443322" />
           </div>
         )}
 
         {/* Exclusive Owner Spotlight Banner Space (Available in both Easy & Advanced modes) */}
         {(activeTab === 'cars' || activeTab === 'realestate' || activeTab === 'jobs') && (
-          <OwnerSpotlightBanner />
+          <div className="w-full max-w-7xl mx-auto px-2 sm:px-4">
+            <OwnerSpotlightBanner />
+          </div>
         )}
 
-        {activeTab === 'embed' && <NetlifyEmbed />}
-        {activeTab === 'currency' && <CurrencySection />}
-        {activeTab === 'phones' && (
-          <MobilePhonesSection
-            searchQuery={searchQuery}
-            onSelectTab={(tab) => setActiveTab(tab)}
-          />
-        )}
-        {activeTab === 'news' && (
-          <SyrianOfficialNewsSection
-            searchQuery={searchQuery}
-            onSelectTab={(tab) => setActiveTab(tab)}
-          />
-        )}
-        {activeTab === 'realestate' && (
-          <RealEstateSection
-            searchQuery={searchQuery}
-            initialFilterType={realEstateFilterType}
-          />
-        )}
-        {activeTab === 'cars' && (
-          <CarsSection
-            searchQuery={searchQuery}
-            onSelectTab={(tab) => setActiveTab(tab)}
-          />
-        )}
-        {activeTab === 'jobs' && (
-          <JobsSection
-            searchQuery={searchQuery}
-            initialCategory={jobsCategory}
-          />
-        )}
-        {activeTab === 'saved' && <SavedListingsSection />}
-        {activeTab === 'taxidelivery' && <TaxiDeliverySection searchQuery={searchQuery} />}
-        {activeTab === 'ledger' && <LedgerSection />}
-        {activeTab === 'messages' && <MessagesSection />}
+        <div key={activeTab} className="animate-fadeIn w-full max-w-7xl mx-auto flex-1 flex flex-col items-stretch px-2 sm:px-4 md:px-6">
+          {activeTab === 'embed' && <NetlifyEmbed />}
+          {activeTab === 'currency' && <CurrencySection />}
+          {activeTab === 'phones' && (
+            <MobilePhonesSection
+              searchQuery={searchQuery}
+              onSelectTab={handleTabChange}
+            />
+          )}
+          {activeTab === 'news' && (
+            <SyrianOfficialNewsSection
+              searchQuery={searchQuery}
+              onSelectTab={handleTabChange}
+            />
+          )}
+          {activeTab === 'realestate' && (
+            <RealEstateSection
+              searchQuery={searchQuery}
+              initialFilterType={realEstateFilterType}
+            />
+          )}
+          {activeTab === 'cars' && (
+            <CarsSection
+              searchQuery={searchQuery}
+              onSelectTab={handleTabChange}
+            />
+          )}
+          {activeTab === 'jobs' && (
+            <JobsSection
+              searchQuery={searchQuery}
+              initialCategory={jobsCategory}
+            />
+          )}
+          {activeTab === 'saved' && <SavedListingsSection />}
+          {activeTab === 'taxidelivery' && <TaxiDeliverySection searchQuery={searchQuery} />}
+          {activeTab === 'ledger' && <LedgerSection />}
+          {activeTab === 'messages' && <MessagesSection />}
+        </div>
       </main>
 
       {/* Kleinanzeigen Style Bottom Navigation Bar */}
       <BottomNavBar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleTabChange}
         onOpenCreateAd={() => setIsCreateAdOpen(true)}
         onOpenProfile={() => setIsProfileOpen(true)}
       />

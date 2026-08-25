@@ -92,13 +92,19 @@ export const Navbar: React.FC<NavbarProps> = ({
   const searchRef = useRef<HTMLDivElement>(null);
   const quickMenuRef = useRef<HTMLDivElement>(null);
 
-  // Local Storage Search History State
+  // Local Storage Search History State (Last 5 Search Queries)
   const [searchHistory, setSearchHistory] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem('oms_search_history');
-      return saved ? JSON.parse(saved) : ['هيونداي النترا', 'شقق دمشق', 'تكسي طارئ', 'محاسب'];
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.slice(0, 5);
+        }
+      }
+      return ['هيونداي النترا', 'شقق دمشق', 'تكسي طارئ', 'محاسب', 'سامسونج S24'];
     } catch (e) {
-      return ['هيونداي النترا', 'شقق دمشق', 'تكسي طارئ', 'محاسب'];
+      return ['هيونداي النترا', 'شقق دمشق', 'تكسي طارئ', 'محاسب', 'سامسونج S24'];
     }
   });
 
@@ -106,8 +112,9 @@ export const Navbar: React.FC<NavbarProps> = ({
     const trimmed = queryStr.trim();
     if (!trimmed || trimmed.length < 2) return;
     setSearchHistory((prev) => {
+      // Remove any duplicate of this query (case-insensitive) and place it at the very top (index 0)
       const filtered = prev.filter((item) => item.toLowerCase() !== trimmed.toLowerCase());
-      const updated = [trimmed, ...filtered].slice(0, 8);
+      const updated = [trimmed, ...filtered].slice(0, 5); // Strictly top 5 recent searches
       try {
         localStorage.setItem('oms_search_history', JSON.stringify(updated));
       } catch (e) {
@@ -714,26 +721,35 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </div>
               )}
               {q.length === 0 ? (
-                /* Recent Search History & Popular Suggestions Panel */
-                <div className="p-3 space-y-3">
-                  {/* Search History */}
-                  {searchHistory.length > 0 && (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-[11px] font-bold text-slate-400">
-                        <span className="flex items-center gap-1.5 text-amber-400">
-                          <History className="w-3.5 h-3.5" />
-                          <span>{language === 'ar' ? 'سجل البحث الأخير (Local Storage):' : 'Recent Search History:'}</span>
-                        </span>
+                /* Recent Search History (Last 5) & Popular Suggestions Panel */
+                <div className="p-3 space-y-3.5">
+                  {/* Search History - Last 5 searches */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-[11px] font-bold text-slate-400">
+                      <span className="flex items-center gap-1.5 text-amber-400">
+                        <History className="w-4 h-4 text-amber-400" />
+                        <span>{language === 'ar' ? 'سجل البحث الأخير (آخر 5 عمليات بحث):' : 'Recent Search History (Last 5):'}</span>
+                        {searchHistory.length > 0 && (
+                          <span className="bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[9.5px] px-1.5 py-0.2 rounded-full font-mono font-bold">
+                            {searchHistory.length}/5
+                          </span>
+                        )}
+                      </span>
+                      {searchHistory.length > 0 && (
                         <button
+                          type="button"
                           onClick={clearSearchHistory}
-                          className="text-slate-500 hover:text-rose-400 transition-colors flex items-center gap-1 text-[10px] cursor-pointer"
+                          className="text-slate-400 hover:text-rose-400 transition-colors flex items-center gap-1 text-[10px] cursor-pointer bg-slate-800/60 hover:bg-rose-500/10 px-2 py-0.5 rounded-lg border border-slate-700/50 hover:border-rose-500/30"
+                          title={language === 'ar' ? 'مسح سجل البحث بالكامل' : 'Clear all search history'}
                         >
-                          <Trash2 className="w-3 h-3" />
-                          <span>{language === 'ar' ? 'مسح السجل' : 'Clear History'}</span>
+                          <Trash2 className="w-3 h-3 text-rose-400" />
+                          <span>{language === 'ar' ? 'مسح السجل' : 'Clear All'}</span>
                         </button>
-                      </div>
+                      )}
+                    </div>
 
-                      <div className="flex flex-wrap gap-1.5">
+                    {searchHistory.length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                         {searchHistory.map((item, idx) => (
                           <div
                             key={idx}
@@ -741,27 +757,46 @@ export const Navbar: React.FC<NavbarProps> = ({
                               setSearchQuery?.(item);
                               saveQueryToHistory(item);
                             }}
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-950 border border-slate-800 hover:border-amber-500/50 text-slate-200 text-[11px] cursor-pointer transition-all group"
+                            className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-slate-950/80 border border-slate-800 hover:border-amber-500/60 hover:bg-slate-800/80 text-slate-200 text-xs cursor-pointer transition-all group shadow-xs"
+                            title={language === 'ar' ? `البحث عن: ${item}` : `Search for: ${item}`}
                           >
-                            <Clock className="w-3 h-3 text-slate-500 group-hover:text-amber-400" />
-                            <span className="font-medium">{item}</span>
-                            <button
-                              onClick={(e) => removeHistoryItem(e, item)}
-                              className="text-slate-500 hover:text-rose-400 p-0.5 rounded-full hover:bg-slate-800 transition-colors mr-0.5 cursor-pointer"
-                              title={language === 'ar' ? 'حذف من السجل' : 'Remove item'}
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
+                            <div className="flex items-center gap-2 truncate min-w-0">
+                              <span className="w-5 h-5 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px] font-mono font-bold flex items-center justify-center shrink-0 group-hover:bg-amber-500 group-hover:text-slate-950 transition-colors">
+                                {idx + 1}
+                              </span>
+                              <Clock className="w-3.5 h-3.5 text-slate-500 group-hover:text-amber-400 shrink-0" />
+                              <span className="font-semibold truncate text-slate-200 group-hover:text-amber-200">
+                                {item}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <span className="text-[10px] text-amber-400/0 group-hover:text-amber-400/80 transition-opacity font-bold hidden sm:inline">
+                                {language === 'ar' ? 'بحث ↵' : 'Search ↵'}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={(e) => removeHistoryItem(e, item)}
+                                className="text-slate-500 hover:text-rose-400 p-1 rounded-md hover:bg-rose-500/20 transition-colors cursor-pointer"
+                                title={language === 'ar' ? 'حذف من السجل' : 'Remove from history'}
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
                         ))}
                       </div>
-                    </div>
-                  )}
+                    ) : (
+                      <div className="p-3 bg-slate-950/50 rounded-xl border border-slate-800 text-center text-slate-500 text-[11px]">
+                        <Clock className="w-4 h-4 mx-auto mb-1 text-slate-600" />
+                        <span>{language === 'ar' ? 'لا يوجد عمليات بحث سابقة. ابحث عن أي منتج أو سيارة أو عقار ليتم حفظه تلقائياً هنا.' : 'No recent searches. Search for any item to automatically save it here.'}</span>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Popular Suggestions */}
-                  <div className="space-y-1.5 pt-1">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                      {language === 'ar' ? 'الأكثر بحثاً اليوم:' : 'Popular Searches:'}
+                  <div className="space-y-1.5 pt-2 border-t border-slate-800/80">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                      {language === 'ar' ? '🔥 الأكثر بحثاً وشهرة اليوم:' : '🔥 Popular Searches Today:'}
                     </span>
                     <div className="flex flex-wrap gap-1.5 text-[11px]">
                       {[
@@ -769,14 +804,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                         { label: language === 'ar' ? 'شقق للآجار دمشق' : 'Damascus Apartments', query: 'دمشق' },
                         { label: language === 'ar' ? 'تكسي طارئ' : 'Emergency Taxi', query: 'تكسي' },
                         { label: language === 'ar' ? 'وظائف وسائقين' : 'Drivers & Jobs', query: 'سائق' },
+                        { label: language === 'ar' ? 'آيفون وسامسونج' : 'iPhone & Samsung', query: 'سامسونج' },
                       ].map((tag, i) => (
                         <button
                           key={i}
+                          type="button"
                           onClick={() => {
                             setSearchQuery?.(tag.query);
                             saveQueryToHistory(tag.query);
                           }}
-                          className="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl transition-all cursor-pointer font-medium"
+                          className="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl transition-all cursor-pointer font-medium hover:border-amber-400/60"
                         >
                           🔍 {tag.label}
                         </button>
@@ -785,21 +822,73 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </div>
                 </div>
               ) : totalMatches === 0 ? (
-                <div className="p-4 text-center text-slate-400">
-                  <p className="font-bold text-slate-300">
-                    {language === 'ar' ? 'لا توجد نتائج مطابقة' : 'No matching results found'}
-                  </p>
-                  <p className="text-[11px] text-slate-400 mt-1">
-                    {language === 'ar' ? `جرب البحث عن كلمة أخرى بدلاً من "${q}"` : `Try searching for something else`}
-                  </p>
+                <div className="p-4 text-center text-slate-400 space-y-3">
+                  <div>
+                    <p className="font-bold text-slate-300">
+                      {language === 'ar' ? 'لا توجد نتائج مطابقة' : 'No matching results found'}
+                    </p>
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      {language === 'ar' ? `جرب البحث عن كلمة أخرى بدلاً من "${q}"` : `Try searching for something else`}
+                    </p>
+                  </div>
+
+                  {searchHistory.length > 0 && (
+                    <div className="pt-2 border-t border-slate-800 text-right">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[10.5px] font-bold text-amber-400 flex items-center gap-1">
+                          <History className="w-3.5 h-3.5" />
+                          <span>{language === 'ar' ? 'الرجوع لعمليات البحث السابقة:' : 'Previous Searches:'}</span>
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {searchHistory.map((item, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              setSearchQuery?.(item);
+                              saveQueryToHistory(item);
+                            }}
+                            className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-950 border border-slate-800 hover:border-amber-500 text-slate-300 hover:text-amber-300 text-[10.5px] cursor-pointer transition-all"
+                          >
+                            <Clock className="w-3 h-3 text-slate-500" />
+                            <span>{item}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <>
                   {/* Results Header */}
-                  <div className="bg-slate-950 px-3.5 py-2 flex items-center justify-between text-[11px] text-slate-400 font-bold">
+                  <div className="bg-slate-950 px-3.5 py-2 flex items-center justify-between text-[11px] text-slate-400 font-bold border-b border-slate-800">
                     <span>{language === 'ar' ? `نتائج البحث المباشر (${totalMatches})` : `Live Search Results (${totalMatches})`}</span>
                     <span className="text-amber-400 font-mono text-[10px]">تحديث فوري</span>
                   </div>
+
+                  {/* Quick Previous Searches Strip */}
+                  {searchHistory.length > 0 && (
+                    <div className="px-3 py-1.5 bg-slate-950/80 border-b border-slate-800/80 flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+                      <span className="text-[10px] text-slate-500 font-bold shrink-0 flex items-center gap-1">
+                        <History className="w-3 h-3 text-amber-400/80" />
+                        <span>{language === 'ar' ? 'السجل:' : 'History:'}</span>
+                      </span>
+                      {searchHistory.map((item, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setSearchQuery?.(item);
+                            saveQueryToHistory(item);
+                          }}
+                          className="px-2 py-0.5 rounded-md bg-slate-900 border border-slate-800 hover:border-amber-500/50 text-slate-300 hover:text-amber-300 text-[10px] whitespace-nowrap shrink-0 transition-colors"
+                        >
+                          {item}
+                        </button>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Section 1: Cars & Tools */}
                   {matchedCars.length > 0 && (

@@ -2,6 +2,7 @@ import React from 'react';
 import { X, Scale, Check, Trash2, ArrowLeftRight } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { CarListing, RealEstateListing } from '../types';
+import { LazyImage } from './LazyImage';
 
 interface CompareModalProps {
   isOpen: boolean;
@@ -96,8 +97,8 @@ export const CompareModal: React.FC<CompareModalProps> = ({
                         >
                           <X className="w-3 h-3" />
                         </button>
-                        <img
-                          src={'image' in item ? item.image : item.images?.[0]}
+                        <LazyImage
+                          src={'image' in item ? item.image : item.images?.[0] || ''}
                           alt={item.title}
                           className="w-full h-24 object-cover rounded-xl mb-2 border border-slate-800"
                         />
