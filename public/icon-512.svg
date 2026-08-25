@@ -1,100 +1,174 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <!-- Background Gradient -->
-    <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stopColor="#0d1b2a" />
-      <stop offset="60%" stopColor="#0b1320" />
-      <stop offset="100%" stopColor="#050811" />
+    <!-- Background Radial Gradient: Deep Emerald Green / Obsidian -->
+    <radialGradient id="cardBg" cx="50%" cy="50%" r="65%">
+      <stop offset="0%" stopColor="#0B422D" />
+      <stop offset="40%" stopColor="#062E1F" />
+      <stop offset="75%" stopColor="#031C13" />
+      <stop offset="100%" stopColor="#010E09" />
     </radialGradient>
 
-    <!-- Metallic Gold 3D Gradient -->
-    <linearGradient id="goldRim3D" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stopColor="#FFF7C2" />
-      <stop offset="20%" stopColor="#F59E0B" />
-      <stop offset="40%" stopColor="#B45309" />
-      <stop offset="60%" stopColor="#FBBF24" />
-      <stop offset="80%" stopColor="#78350F" />
-      <stop offset="100%" stopColor="#FEF08A" />
+    <!-- Metallic 3D Gold Rim -->
+    <linearGradient id="goldRim" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#FFFBEB" />
+      <stop offset="15%" stopColor="#FDE68A" />
+      <stop offset="35%" stopColor="#D97706" />
+      <stop offset="50%" stopColor="#92400E" />
+      <stop offset="70%" stopColor="#F59E0B" />
+      <stop offset="85%" stopColor="#FDE68A" />
+      <stop offset="100%" stopColor="#78350F" />
     </linearGradient>
 
-    <!-- Specular Bright Gold -->
-    <linearGradient id="goldBright" x1="0%" y1="0%" x2="0%" y2="100%">
+    <!-- Specular Bright Gold Gradient -->
+    <linearGradient id="specularGold" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" stopColor="#FFFFFF" />
       <stop offset="25%" stopColor="#FEF08A" />
-      <stop offset="65%" stopColor="#D97706" />
+      <stop offset="60%" stopColor="#EAB308" />
+      <stop offset="85%" stopColor="#B45309" />
       <stop offset="100%" stopColor="#78350F" />
     </linearGradient>
 
-    <!-- Deep Emerald Green Radial Background -->
-    <radialGradient id="deepGreenRadial" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stopColor="#0B3C2A" />
-      <stop offset="65%" stopColor="#042217" />
-      <stop offset="90%" stopColor="#02150D" />
-      <stop offset="100%" stopColor="#052E1F" />
-    </radialGradient>
-
-    <!-- Text Gold -->
-    <linearGradient id="goldText3D" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stopColor="#FFFBEB" />
-      <stop offset="30%" stopColor="#FCD34D" />
-      <stop offset="70%" stopColor="#D97706" />
-      <stop offset="100%" stopColor="#78350F" />
+    <!-- 3D Typography Gold Gradient -->
+    <linearGradient id="goldTextGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stopColor="#FFFFFF" />
+      <stop offset="20%" stopColor="#FFF7C2" />
+      <stop offset="50%" stopColor="#F59E0B" />
+      <stop offset="80%" stopColor="#B45309" />
+      <stop offset="100%" stopColor="#713F12" />
     </linearGradient>
 
-    <filter id="shadow3D" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor="#000000" floodOpacity="0.9" />
+    <!-- 3D Red Stars Gradient -->
+    <linearGradient id="redStarGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stopColor="#F87171" />
+      <stop offset="30%" stopColor="#DC2626" />
+      <stop offset="70%" stopColor="#991B1B" />
+      <stop offset="100%" stopColor="#450A0A" />
+    </linearGradient>
+
+    <!-- 3D Shadow Filter -->
+    <filter id="drop3D" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#000000" floodOpacity="0.9" />
+    </filter>
+    <filter id="glowGold" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
     </filter>
   </defs>
 
-  <!-- Background base for splash/icon -->
-  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+  <!-- 1. SQUIRCLE APP ICON CONTAINER (Golden Rounded Bezel) -->
+  <rect x="8" y="8" width="496" height="496" rx="100" fill="url(#goldRim)" stroke="#451A03" stroke-width="4" />
+  <rect x="18" y="18" width="476" height="476" rx="90" fill="#1C1102" />
+  <rect x="22" y="22" width="468" height="468" rx="86" fill="url(#cardBg)" stroke="url(#goldRim)" stroke-width="2" />
 
-  <!-- Outer Ambient Glow -->
-  <circle cx="256" cy="216" r="170" fill="#f59e0b" opacity="0.15" filter="blur(20px)" />
+  <!-- 2. SYRIAN FLAG BANNER CURVED IN BACKGROUND -->
+  <g opacity="0.92">
+    <!-- Green Top Stripe -->
+    <path d="M 24 95 Q 256 120 488 95 L 488 135 Q 256 160 24 135 Z" fill="#007A3D" />
+    <!-- White Middle Stripe with Stars -->
+    <path d="M 24 135 Q 256 160 488 135 L 488 205 Q 256 230 24 205 Z" fill="#F8FAFC" />
+    <!-- Black Bottom Stripe -->
+    <path d="M 24 205 Q 256 230 488 205 L 488 245 Q 256 270 24 245 Z" fill="#0F172A" />
 
-  <!-- Medallion Center -->
-  <g filter="url(#shadow3D)">
-    <circle cx="256" cy="200" r="150" fill="url(#goldRim3D)" stroke="#582900" stroke-width="3" />
-    <circle cx="256" cy="200" r="136" fill="#1C1408" opacity="0.6" />
-    <circle cx="256" cy="200" r="132" fill="url(#goldRim3D)" opacity="0.9" />
-    <circle cx="256" cy="200" r="126" fill="url(#deepGreenRadial)" stroke="url(#goldRim3D)" stroke-width="2.5" />
-    <circle cx="256" cy="200" r="116" fill="none" stroke="url(#goldBright)" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.7" />
+    <!-- Two Red Stars on White Stripe -->
+    <!-- Left Red Star -->
+    <polygon points="105,152 109,165 122,165 111,173 115,186 105,178 95,186 99,173 88,165 101,165" fill="url(#redStarGrad)" stroke="#580A0A" stroke-width="0.8" filter="url(#drop3D)" />
+    <!-- Right Red Star -->
+    <polygon points="407,152 411,165 424,165 413,173 417,186 407,178 397,186 401,173 390,165 403,165" fill="url(#redStarGrad)" stroke="#580A0A" stroke-width="0.8" filter="url(#drop3D)" />
   </g>
 
-  <!-- Stars -->
-  <g fill="url(#goldBright)" filter="url(#shadow3D)">
-    <polygon points="256,90 261,102 274,102 263.5,110 267.5,123 256,115 244.5,123 248.5,110 238,102 251,102" />
-    <polygon points="212,98 216,109 227,109 218.5,116 221.5,127 212,120 202.5,127 205.5,116 197,109 208,109" transform="rotate(-12 212 112)" />
-    <polygon points="300,98 304,109 315,109 306.5,116 309.5,127 300,120 290.5,127 293.5,116 285,109 296,109" transform="rotate(12 300 112)" />
+  <!-- 3. TOP THREE GOLD STARS ABOVE EAGLE -->
+  <g fill="url(#specularGold)" filter="url(#drop3D)">
+    <!-- Center Top Star -->
+    <polygon points="256,42 260.5,54 273,54 263,61.5 267,73.5 256,66 245,73.5 249,61.5 239,54 251.5,54" stroke="#78350F" stroke-width="0.6" />
+    <!-- Left Top Star -->
+    <polygon points="204,50 208,61 220,61 210.5,68 214,79 204,72 194,79 197.5,68 188,61 200,61" stroke="#78350F" stroke-width="0.6" transform="rotate(-14 204 62)" />
+    <!-- Right Top Star -->
+    <polygon points="308,50 312,61 324,61 314.5,68 318,79 308,72 298,79 301.5,68 292,61 304,61" stroke="#78350F" stroke-width="0.6" transform="rotate(14 308 62)" />
   </g>
 
-  <!-- Eagle Emblem -->
-  <g fill="url(#goldRim3D)" stroke="#3E1A00" stroke-width="0.8" filter="url(#shadow3D)">
-    <path d="M 256 150 Q 200 114 132 136 Q 160 170 190 200 Q 222 176 256 186 Z" fill="url(#goldBright)" />
-    <path d="M 256 150 Q 312 114 380 136 Q 352 170 322 200 Q 290 176 256 186 Z" fill="url(#goldBright)" />
+  <!-- 4. MAJESTIC 3D GOLDEN EAGLE WITH SPREAD WINGS -->
+  <g filter="url(#drop3D)">
+    <!-- Outer Wing Span Left & Right -->
+    <path d="M 256 122 Q 185 82 142 108 Q 165 140 196 172 Q 226 150 256 160 Z" fill="url(#specularGold)" stroke="#451A03" stroke-width="0.8" />
+    <path d="M 256 122 Q 327 82 370 108 Q 347 140 316 172 Q 286 150 256 160 Z" fill="url(#specularGold)" stroke="#451A03" stroke-width="0.8" />
 
-    <path d="M 138 138 Q 166 161 194 208 Q 170 188 148 164 Z" fill="url(#goldRim3D)" />
-    <path d="M 156 150 Q 180 172 204 216 Q 184 196 164 174 Z" fill="url(#goldBright)" />
+    <!-- Left Wing Feathers Layered -->
+    <path d="M 144 110 Q 170 134 200 178 Q 175 160 154 136 Z" fill="url(#goldRim)" stroke="#3E1A00" stroke-width="0.5" />
+    <path d="M 160 120 Q 184 144 210 186 Q 190 168 170 146 Z" fill="url(#specularGold)" />
+    <path d="M 180 130 Q 200 154 220 192 Q 204 176 188 156 Z" fill="url(#goldRim)" />
 
-    <path d="M 374 138 Q 346 161 318 208 Q 342 188 364 164 Z" fill="url(#goldRim3D)" />
-    <path d="M 356 150 Q 332 172 308 216 Q 328 196 348 174 Z" fill="url(#goldBright)" />
+    <!-- Right Wing Feathers Layered -->
+    <path d="M 368 110 Q 342 134 312 178 Q 337 160 358 136 Z" fill="url(#goldRim)" stroke="#3E1A00" stroke-width="0.5" />
+    <path d="M 352 120 Q 328 144 302 186 Q 322 168 342 146 Z" fill="url(#specularGold)" />
+    <path d="M 332 130 Q 312 154 292 192 Q 308 176 324 156 Z" fill="url(#goldRim)" />
 
-    <path d="M 234 232 L 256 270 L 278 232 L 267 212 L 245 212 Z" fill="url(#goldBright)" />
-    <path d="M 245 235 L 256 276 L 267 235 Z" fill="url(#goldRim3D)" />
+    <!-- Tail Feathers -->
+    <path d="M 234 200 L 256 236 L 278 200 L 268 184 L 244 184 Z" fill="url(#specularGold)" stroke="#451A03" stroke-width="0.8" />
+    <path d="M 246 202 L 256 242 L 266 202 Z" fill="url(#goldRim)" />
 
-    <path d="M 206 226 L 198 246 M 209 229 L 209 249 M 215 226 L 220 246" stroke="#FEF08A" stroke-width="3" stroke-linecap="round" />
-    <path d="M 306 226 L 314 246 M 303 229 L 303 249 M 297 226 L 292 246" stroke="#FEF08A" stroke-width="3" stroke-linecap="round" />
+    <!-- Eagle Claws / Talons -->
+    <path d="M 212 192 L 202 210 M 216 195 L 216 213 M 222 192 L 228 210" stroke="#FEF08A" stroke-width="3" stroke-linecap="round" />
+    <path d="M 300 192 L 310 210 M 296 195 L 296 213 M 290 192 L 284 210" stroke="#FEF08A" stroke-width="3" stroke-linecap="round" />
 
-    <path d="M 231 174 Q 256 162 281 174 Q 273 220 256 232 Q 239 220 231 174 Z" fill="url(#goldBright)" stroke="#582900" stroke-width="1.2" />
+    <!-- Eagle Chest & Torso Shield -->
+    <path d="M 232 144 Q 256 134 280 144 Q 272 190 256 200 Q 240 190 232 144 Z" fill="url(#specularGold)" stroke="#451A03" stroke-width="1.2" />
+    <path d="M 240 152 Q 256 144 272 152 Q 266 182 256 190 Q 246 182 240 152 Z" fill="url(#goldRim)" />
 
-    <path d="M 242 136 Q 256 122 267 133 Q 278 139 264 150 Q 253 155 242 136 Z" fill="url(#goldBright)" stroke="#3E1A00" stroke-width="1.2" />
-    <path d="M 267 133 Q 280 136 270 144 Z" fill="#78350F" stroke="#FEF08A" stroke-width="1" />
-    <circle cx="256" cy="133" r="2.5" fill="#02150D" />
+    <!-- Center Chest Star below eagle -->
+    <polygon points="256,238 259.5,248 270,248 261.5,254 264.5,264 256,258 247.5,264 250.5,254 242,248 252.5,248" fill="url(#redStarGrad)" stroke="#780505" stroke-width="0.8" />
+
+    <!-- Eagle Head Profile (Looking Right) -->
+    <path d="M 242 108 Q 256 94 268 104 Q 278 110 266 122 Q 254 128 242 108 Z" fill="url(#specularGold)" stroke="#451A03" stroke-width="1" />
+    <!-- Beak Hook -->
+    <path d="M 268 104 Q 280 108 270 116 Z" fill="#92400E" stroke="#FEF08A" stroke-width="0.8" />
+    <!-- Eye -->
+    <circle cx="256" cy="106" r="2.5" fill="#010E09" />
   </g>
 
-  <!-- Typography OMS MARKET -->
-  <g filter="url(#shadow3D)">
-    <text x="256" y="405" text-anchor="middle" fill="url(#goldText3D)" stroke="#451A00" stroke-width="1.6" font-size="52" font-weight="900" font-family="Georgia, serif" letter-spacing="4">OMS</text>
-    <text x="256" y="460" text-anchor="middle" fill="url(#goldText3D)" stroke="#451A00" stroke-width="1.2" font-size="34" font-weight="bold" font-family="'Cairo', Tahoma, sans-serif">الأسواق السورية</text>
+  <!-- 5. 3D GOLDEN ARABIC TYPOGRAPHY "الأسواق السورية" -->
+  <g filter="url(#drop3D)">
+    <!-- Word 1: الأسواق -->
+    <text
+      x="256"
+      y="346"
+      text-anchor="middle"
+      fill="url(#goldTextGrad)"
+      stroke="#3A1700"
+      stroke-width="3"
+      paint-order="stroke fill"
+      font-size="70"
+      font-weight="900"
+      font-family="'Cairo', 'Traditional Arabic', 'Amiri', 'Segoe UI', Tahoma, sans-serif"
+      letter-spacing="1"
+    >
+      الأسواق
+    </text>
+
+    <!-- Word 2: السورية -->
+    <text
+      x="256"
+      y="424"
+      text-anchor="middle"
+      fill="url(#goldTextGrad)"
+      stroke="#3A1700"
+      stroke-width="3"
+      paint-order="stroke fill"
+      font-size="66"
+      font-weight="900"
+      font-family="'Cairo', 'Traditional Arabic', 'Amiri', 'Segoe UI', Tahoma, sans-serif"
+      letter-spacing="1"
+    >
+      السورية
+    </text>
+  </g>
+
+  <!-- 6. THREE RED STARS AT THE BOTTOM -->
+  <g fill="url(#redStarGrad)" filter="url(#drop3D)">
+    <!-- Bottom Center Star -->
+    <polygon points="256,442 260.5,455 274,455 263,463 267,476 256,468 245,476 249,463 238,455 251.5,455" stroke="#450A0A" stroke-width="0.8" />
+    <!-- Bottom Left Star -->
+    <polygon points="196,446 200,458 213,458 202.5,465 206.5,477 196,470 185.5,477 189.5,465 179,458 192,458" stroke="#450A0A" stroke-width="0.8" />
+    <!-- Bottom Right Star -->
+    <polygon points="316,446 320,458 333,458 322.5,465 326.5,477 316,470 305.5,477 309.5,465 299,458 312,458" stroke="#450A0A" stroke-width="0.8" />
   </g>
 </svg>
