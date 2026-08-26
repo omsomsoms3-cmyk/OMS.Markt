@@ -160,6 +160,21 @@ app.post("/api/ai/generate-ad-image", async (req, res) => {
 });
 
 async function startServer() {
+  // Ensure Service Worker & Manifest headers for PWA compliance
+  app.get('/sw.js', (req, res) => {
+    res.setHeader('Service-Worker-Allowed', '/');
+    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    const swPath = path.join(process.cwd(), process.env.NODE_ENV === 'production' ? 'dist/sw.js' : 'public/sw.js');
+    res.sendFile(swPath);
+  });
+
+  app.get('/manifest.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/manifest+json; charset=utf-8');
+    const mPath = path.join(process.cwd(), process.env.NODE_ENV === 'production' ? 'dist/manifest.json' : 'public/manifest.json');
+    res.sendFile(mPath);
+  });
+
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
