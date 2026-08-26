@@ -127,14 +127,25 @@ export const CreateAdModal: React.FC<CreateAdModalProps> = ({
     if (!files || files.length === 0) return;
 
     setIsUploadingMedia(true);
-    setAiStatusMessage(language === 'ar' ? '☁️ جاري رفع الصور والفيديوهات إلى Firebase Storage...' : '☁️ Uploading media to Firebase Storage...');
+    const count = files.length;
+    setAiStatusMessage(
+      language === 'ar'
+        ? `⚡ جاري معالجة ورفع ${count} ${count > 1 ? 'ملفات' : 'ملف'}...`
+        : `⚡ Processing & uploading ${count} media file(s)...`
+    );
 
-    const fileArray = Array.from(files);
-    const uploadedImages: string[] = [];
-    const uploadedVideos: string[] = [];
+    try {
+      const fileArray = Array.from(files);
+      const uploadedImages: string[] = [];
+      const uploadedVideos: string[] = [];
 
-    for (const file of fileArray) {
-      try {
+      for (let i = 0; i < fileArray.length; i++) {
+        const file = fileArray[i];
+        setAiStatusMessage(
+          language === 'ar'
+            ? `⚡ جاري معالجة الملف (${i + 1} من ${fileArray.length})...`
+            : `⚡ Processing file (${i + 1} of ${fileArray.length})...`
+        );
         const folder = file.type.startsWith('video/') ? 'listing_videos' : 'listing_images';
         const cloudUrl = await uploadFileToFirebaseStorage(file, folder);
         if (file.type.startsWith('video/')) {
@@ -142,30 +153,36 @@ export const CreateAdModal: React.FC<CreateAdModalProps> = ({
         } else {
           uploadedImages.push(cloudUrl);
         }
-      } catch (err) {
-        console.error('Error uploading file to Firebase storage:', err);
       }
-    }
 
-    if (uploadedImages.length > 0) {
-      setImagesList((prev) => [...prev, ...uploadedImages]);
-    }
-    if (uploadedVideos.length > 0) {
-      setVideosList((prev) => [...prev, ...uploadedVideos]);
-    }
+      if (uploadedImages.length > 0) {
+        setImagesList((prev) => [...prev, ...uploadedImages]);
+      }
+      if (uploadedVideos.length > 0) {
+        setVideosList((prev) => [...prev, ...uploadedVideos]);
+      }
 
-    setIsUploadingMedia(false);
-    setAiStatusMessage(
-      language === 'ar'
-        ? `✅ تم رفع ${uploadedImages.length + uploadedVideos.length} ملف بنجاح وتخزينها في السحابة!`
-        : `✅ Uploaded ${uploadedImages.length + uploadedVideos.length} media files to Firebase Storage!`
-    );
+      setAiStatusMessage(
+        language === 'ar'
+          ? `✅ تم رفع وتجهيز ${uploadedImages.length + uploadedVideos.length} ملف بنجاح!`
+          : `✅ Successfully uploaded ${uploadedImages.length + uploadedVideos.length} media file(s)!`
+      );
+    } catch (err) {
+      console.error('Error uploading media files:', err);
+      setAiStatusMessage(
+        language === 'ar' ? '⚠️ حدث خطأ أثناء معالجة بعض الملفات' : '⚠️ Error uploading some media files'
+      );
+    } finally {
+      setIsUploadingMedia(false);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       handleFileUpload(e.target.files);
     }
+    // Clear input value so selecting the same file again triggers change
+    e.target.value = '';
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -198,19 +215,8 @@ export const CreateAdModal: React.FC<CreateAdModalProps> = ({
     e.preventDefault();
     if (!title.trim()) return;
 
-    // Ensure all data URLs or temporary images are processed if needed
-    const processedImages: string[] = [];
-    for (const img of imagesList) {
-      if (img.startsWith('data:')) {
-        const cloudUrl = await uploadDataUrlToFirebaseStorage(img, 'listing_images');
-        processedImages.push(cloudUrl);
-      } else {
-        processedImages.push(img);
-      }
-    }
-
     const fallbackImage = 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80';
-    const mainImg = processedImages.length > 0 ? processedImages[0] : fallbackImage;
+    const mainImg = imagesList.length > 0 ? imagesList[0] : fallbackImage;
     const mainVid = videosList.length > 0 ? videosList[0] : undefined;
 
     const newAd: CarListing = {
@@ -223,7 +229,7 @@ export const CreateAdModal: React.FC<CreateAdModalProps> = ({
       type,
       city,
       image: mainImg,
-      images: processedImages.length > 0 ? processedImages : [mainImg],
+      images: imagesList.length > 0 ? imagesList : [mainImg],
       video: mainVid,
       mediaType: mainVid ? 'video' : 'image',
       phone: phone || '0944000000',
@@ -656,9 +662,7 @@ export const CreateAdModal: React.FC<CreateAdModalProps> = ({
                   <div>
                     <p className="text-xs font-bold text-slate-200">
                       {isUploadingMedia
-                        ? language === 'ar'
-                          ? 'جاري الرفع إلى Firebase Storage...'
-                          : 'Uploading to Firebase Storage...'
+                        ? (aiStatusMessage || (language === 'ar' ? 'جاري معالجة ورفع الملفات...' : 'Processing & uploading media...'))
                         : language === 'ar'
                         ? activeMediaTab === 'video'
                           ? 'اضغط هنا لرفع فيديوهات متعددة بلا حدود أو سحبها مباشرةً (MP4, WebM) 🎥'
