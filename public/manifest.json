@@ -136,13 +136,10 @@
       "origin": "https://oms-markt.ai.studio"
     },
     {
-      "origin": "https://*.ai.studio"
-    },
-    {
-      "origin": "*.ai.studio"
-    },
-    {
       "origin": "https://oms-syrian-markets.web.app"
+    },
+    {
+      "origin": "https://oms-syrian-markets.firebaseapp.com"
     }
   ],
   "file_handlers": [

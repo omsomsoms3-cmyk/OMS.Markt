@@ -175,6 +175,12 @@ async function startServer() {
     res.sendFile(mPath);
   });
 
+  app.get('/.well-known/web-app-origin-association', (req, res) => {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    const oPath = path.join(process.cwd(), process.env.NODE_ENV === 'production' ? 'dist/.well-known/web-app-origin-association' : 'public/.well-known/web-app-origin-association');
+    res.sendFile(oPath);
+  });
+
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },

@@ -1,0 +1,10 @@
+{
+  "web_apps": [
+    {
+      "manifest": "https://oms-markt.ai.studio/manifest.json",
+      "details": {
+        "paths": ["/*"]
+      }
+    }
+  ]
+}
