@@ -160,7 +160,7 @@ export interface RealEstateListing {
 export interface CarListing {
   id: string;
   title: string;
-  category?: 'mobile' | 'phones' | 'car' | 'tools' | 'electronics' | 'appliances' | 'furniture' | 'realestate' | 'service';
+  category?: 'mobile' | 'phones' | 'car' | 'tools' | 'electronics' | 'appliances' | 'furniture' | 'realestate' | 'service' | 'other' | string;
   condition?: 'new' | 'used' | 'certified' | string;
   make?: string;
   model?: string;

@@ -206,9 +206,22 @@ export const AdDetailModal: React.FC<AdDetailModalProps> = ({
           <div className="text-center space-y-2 pt-1">
             <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white leading-snug flex items-center justify-center gap-2 flex-wrap">
               <span>{item.title || `${item.fromCity} ➔ ${item.toArea}`}</span>
+              {item.category && (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-400 border border-indigo-500/30">
+                  {item.category === 'mobile' ? '📱 هواتف وموبايلات' :
+                   item.category === 'electronics' ? '💻 إلكترونيات' :
+                   item.category === 'car' ? '🚗 سيارات' :
+                   item.category === 'tools' ? '🔧 أدوات ومعدات' :
+                   item.category === 'appliances' ? '⚡️ أجهزة منزلية' :
+                   item.category === 'realestate' ? '🏠 عقارات' :
+                   item.category === 'furniture' ? '🛋️ أثاث ومفروشات' :
+                   item.category === 'service' ? '🤝 خدمات' :
+                   item.category === 'other' ? '📦 متفرقات وأشياء أخرى' : item.category}
+                </span>
+              )}
               {item.condition && (
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30">
-                  {item.condition === 'new' ? 'جديد ✨' : 'مستعمل ♻️'}
+                  {item.condition === 'new' ? 'جديد ✨' : item.condition === 'certified' ? 'مفحوصة 🛡️' : 'مستعمل ♻️'}
                 </span>
               )}
             </h2>

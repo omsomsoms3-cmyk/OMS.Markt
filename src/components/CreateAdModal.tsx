@@ -27,7 +27,7 @@ export const CreateAdModal: React.FC<CreateAdModalProps> = ({
   const { requestPermission } = usePermissions();
 
   const [title, setTitle] = useState('');
-  const [category, setCategory] = useState<'mobile' | 'tools' | 'appliances' | 'electronics' | 'car' | 'realestate' | 'service'>('mobile');
+  const [category, setCategory] = useState<'mobile' | 'tools' | 'appliances' | 'electronics' | 'car' | 'realestate' | 'service' | 'furniture' | 'other' | string>('mobile');
   const [condition, setCondition] = useState<'new' | 'used' | 'certified'>('used');
   const [type, setType] = useState<'sale' | 'rent'>('sale');
   const [priceUSD, setPriceUSD] = useState<string>('150');
@@ -451,7 +451,9 @@ export const CreateAdModal: React.FC<CreateAdModalProps> = ({
                   <option value="tools">{language === 'ar' ? '🔧 أدوات ومعدات صيانة' : '🔧 Tools & Equipment'}</option>
                   <option value="appliances">{language === 'ar' ? '⚡️ أجهزة منزلية ومولدات' : '⚡️ Appliances & Generators'}</option>
                   <option value="realestate">{language === 'ar' ? '🏠 عقارات وشقق' : '🏠 Real Estate'}</option>
+                  <option value="furniture">{language === 'ar' ? '🛋️ أثاث ومفروشات وديكور' : '🛋️ Furniture & Home Decor'}</option>
                   <option value="service">{language === 'ar' ? '🤝 خدمات وتوصيل' : '🤝 Services & Delivery'}</option>
+                  <option value="other">{language === 'ar' ? '📦 أشياء أخرى ومتفرقات ومنوعات' : '📦 Miscellaneous & Other Items'}</option>
                 </select>
               </div>
 

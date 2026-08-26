@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CarListing, TabType } from '../types';
 import { initialCarListings } from '../data/mockData';
 import { subscribeToListings } from '../lib/listingsService';
-import { ShoppingBag, Plus, Phone, MapPin, Calendar, Tag, Wrench, Car as CarIcon, Laptop, Home, CreditCard, ShieldCheck, Filter, ArrowUpDown, RefreshCw, X, Share2, Flag, Crown, Star, Trash2, Bookmark, BookmarkCheck, Globe, QrCode, ChevronDown, ChevronUp, MoreHorizontal, ZoomIn, Maximize2, Sparkles, Building, Briefcase, Truck, Smartphone } from 'lucide-react';
+import { ShoppingBag, Plus, Phone, MapPin, Calendar, Tag, Wrench, Car as CarIcon, Laptop, Home, CreditCard, ShieldCheck, Filter, ArrowUpDown, RefreshCw, X, Share2, Flag, Crown, Star, Trash2, Bookmark, BookmarkCheck, Globe, QrCode, ChevronDown, ChevronUp, MoreHorizontal, ZoomIn, Maximize2, Sparkles, Building, Briefcase, Truck, Smartphone, Package, Armchair } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAppMode } from '../context/AppModeContext';
 import { PaymentModal, PaymentItemDetails } from './PaymentModal';
@@ -50,7 +50,7 @@ export const CarsSection: React.FC<CarsSectionProps> = ({ searchQuery = '', onSe
     return () => unsubscribe();
   }, []);
   const [filterCondition, setFilterCondition] = useState<'all' | 'new' | 'used'>('all');
-  const [filterCategory, setFilterCategory] = useState<'all' | 'mobile' | 'tools' | 'appliances' | 'electronics' | 'car'>('all');
+  const [filterCategory, setFilterCategory] = useState<'all' | 'mobile' | 'tools' | 'appliances' | 'electronics' | 'car' | 'furniture' | 'other'>('all');
   
   // Sorting & Advanced Filter State
   const [sortOption, setSortOption] = useState<'default' | 'price_asc' | 'price_desc' | 'newest' | 'oldest'>('default');
@@ -199,7 +199,8 @@ export const CarsSection: React.FC<CarsSectionProps> = ({ searchQuery = '', onSe
       const matchesCategory =
         filterCategory === 'all' ||
         item.category === filterCategory ||
-        (filterCategory === 'mobile' && (item.category === 'mobile' || item.category === 'phones'));
+        (filterCategory === 'mobile' && (item.category === 'mobile' || item.category === 'phones')) ||
+        (filterCategory === 'other' && (item.category === 'other' || !item.category || item.category === 'general' || item.category === 'goods'));
       const matchesCity = filterCity === 'all' || 
         item.city.toLowerCase().includes(filterCity.toLowerCase()) || 
         filterCity.toLowerCase().includes(item.city.toLowerCase());
@@ -366,6 +367,30 @@ export const CarsSection: React.FC<CarsSectionProps> = ({ searchQuery = '', onSe
             >
               <Home className="w-3.5 h-3.5" />
               <span>{language === 'ar' ? 'أجهزة منزلية' : 'Appliances'}</span>
+            </button>
+
+            <button
+              onClick={() => setFilterCategory('furniture')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                filterCategory === 'furniture'
+                  ? 'bg-amber-500 text-slate-950 font-black shadow'
+                  : 'bg-slate-950/80 text-slate-300 hover:bg-slate-800 border border-slate-800'
+              }`}
+            >
+              <Armchair className="w-3.5 h-3.5" />
+              <span>{language === 'ar' ? 'أثاث ومفروشات' : 'Furniture'}</span>
+            </button>
+
+            <button
+              onClick={() => setFilterCategory('other')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                filterCategory === 'other'
+                  ? 'bg-amber-500 text-slate-950 font-black shadow'
+                  : 'bg-slate-950/80 text-slate-300 hover:bg-slate-800 border border-slate-800'
+              }`}
+            >
+              <Package className="w-3.5 h-3.5" />
+              <span>{language === 'ar' ? 'أشياء أخرى ومتفرقات' : 'Other & Misc'}</span>
             </button>
           </div>
 
@@ -664,9 +689,14 @@ export const CarsSection: React.FC<CarsSectionProps> = ({ searchQuery = '', onSe
                   {item.title}
                 </h3>
 
-                {/* Specs Chips (Year, Make, Mileage, Storage, RAM, Customs) */}
-                {(item.year || item.make || (item.mileage !== undefined && item.mileage > 0) || item.storage || item.ram || item.customsStatus) && (
+                {/* Specs Chips (Year, Make, Mileage, Storage, RAM, Customs, Category) */}
+                {(item.category || item.year || item.make || (item.mileage !== undefined && item.mileage > 0) || item.storage || item.ram || item.customsStatus) && (
                   <div className="flex flex-wrap items-center gap-1 pt-0.5">
+                    {item.category && item.category !== 'car' && (
+                      <span className="bg-amber-950/80 text-amber-300 text-[9px] px-1.5 py-0.5 rounded-md border border-amber-700/80 font-bold">
+                        {item.category === 'other' ? '📦 متفرقات' : item.category === 'furniture' ? '🛋️ أثاث' : item.category === 'tools' ? '🔧 أدوات' : item.category === 'appliances' ? '⚡️ أجهزة' : item.category === 'electronics' ? '💻 إلكترونيات' : item.category === 'mobile' || item.category === 'phones' ? '📱 هواتف' : item.category === 'realestate' ? '🏠 عقارات' : item.category === 'service' ? '🤝 خدمات' : item.category}
+                      </span>
+                    )}
                     {item.storage && (
                       <span className="bg-indigo-950/80 text-indigo-300 text-[10px] px-1.5 py-0.5 rounded-md border border-indigo-700/80 font-mono font-bold">
                         💾 {item.storage}
