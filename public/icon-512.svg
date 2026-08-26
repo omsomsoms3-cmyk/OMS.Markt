@@ -1,185 +1,354 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
   <defs>
-    <!-- Rich Background Deep Emerald Gradient -->
-    <linearGradient id="bgRichEmerald" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stopColor="#0a3d28" />
-      <stop offset="40%" stopColor="#052417" />
-      <stop offset="100%" stopColor="#011009" />
-    </linearGradient>
+    <!-- Background Texture & Gradient -->
+    <radialGradient id="emeraldBg" cx="50%" cy="30%" r="75%">
+      <stop offset="0%" stopColor="#134e32" />
+      <stop offset="35%" stopColor="#0a3520" />
+      <stop offset="70%" stopColor="#041f12" />
+      <stop offset="100%" stopColor="#010e08" />
+    </radialGradient>
 
-    <!-- 3D Gold Rim Bezel -->
-    <linearGradient id="goldBezel3D" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stopColor="#FFFBEB" />
-      <stop offset="12%" stopColor="#FDE68A" />
-      <stop offset="28%" stopColor="#F59E0B" />
-      <stop offset="45%" stopColor="#B45309" />
-      <stop offset="65%" stopColor="#78350F" />
-      <stop offset="82%" stopColor="#FDE68A" />
+    <!-- Metallic Gold Outer Frame Gradient -->
+    <linearGradient id="goldFrameGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#FFFDF0" />
+      <stop offset="10%" stopColor="#FDE68A" />
+      <stop offset="25%" stopColor="#D97706" />
+      <stop offset="40%" stopColor="#92400E" />
+      <stop offset="55%" stopColor="#FFFBEB" />
+      <stop offset="70%" stopColor="#F59E0B" />
+      <stop offset="85%" stopColor="#B45309" />
       <stop offset="100%" stopColor="#451A03" />
     </linearGradient>
 
-    <!-- Super Bright Gold Metallic -->
-    <linearGradient id="goldEagleMetal" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stopColor="#FFFFFF" />
-      <stop offset="18%" stopColor="#FEF08A" />
-      <stop offset="45%" stopColor="#F59E0B" />
-      <stop offset="75%" stopColor="#D97706" />
-      <stop offset="100%" stopColor="#78350F" />
+    <!-- Inner Gold Lip Gradient -->
+    <linearGradient id="goldInnerLip" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stopColor="#FEF08A" />
+      <stop offset="50%" stopColor="#B45309" />
+      <stop offset="100%" stopColor="#FDE68A" />
     </linearGradient>
 
-    <!-- Specular Bright Gold for Wings Highlight -->
-    <linearGradient id="goldWingHighlight" x1="0%" y1="0%" x2="100%" y2="100%">
+    <!-- 3D Gold Specular for Eagle & Stars -->
+    <linearGradient id="goldSpecular" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stopColor="#FFFFFF" />
+      <stop offset="15%" stopColor="#FEF9C3" />
+      <stop offset="35%" stopColor="#FACC15" />
+      <stop offset="65%" stopColor="#CA8A04" />
+      <stop offset="85%" stopColor="#854D0E" />
+      <stop offset="100%" stopColor="#422006" />
+    </linearGradient>
+
+    <!-- Wing Highlights -->
+    <linearGradient id="wingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stopColor="#FFFDF0" />
-      <stop offset="30%" stopColor="#FDE68A" />
-      <stop offset="70%" stopColor="#F59E0B" />
-      <stop offset="100%" stopColor="#92400E" />
+      <stop offset="30%" stopColor="#FDE047" />
+      <stop offset="60%" stopColor="#D97706" />
+      <stop offset="90%" stopColor="#78350F" />
+      <stop offset="100%" stopColor="#2E1000" />
     </linearGradient>
 
-    <!-- 3D Gold Typography Gradient -->
-    <linearGradient id="textGold3D" x1="0%" y1="0%" x2="0%" y2="100%">
+    <!-- 3D Arabic Text Solid Gold Gradient -->
+    <linearGradient id="goldTextGrad" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" stopColor="#FFFFFF" />
-      <stop offset="22%" stopColor="#FFF7C2" />
-      <stop offset="55%" stopColor="#F59E0B" />
-      <stop offset="85%" stopColor="#D97706" />
-      <stop offset="100%" stopColor="#713F12" />
+      <stop offset="18%" stopColor="#FFFBEB" />
+      <stop offset="35%" stopColor="#FDE68A" />
+      <stop offset="60%" stopColor="#EAB308" />
+      <stop offset="82%" stopColor="#B45309" />
+      <stop offset="100%" stopColor="#5B2404" />
     </linearGradient>
 
-    <!-- Ruby Red 3D Stars -->
-    <linearGradient id="rubyRed3D" x1="0%" y1="0%" x2="0%" y2="100%">
+    <!-- Ruby 3D Red Stars Gradient -->
+    <linearGradient id="rubyStar" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" stopColor="#FCA5A5" />
-      <stop offset="25%" stopColor="#EF4444" />
-      <stop offset="65%" stopColor="#B91C1C" />
+      <stop offset="25%" stopColor="#DC2626" />
+      <stop offset="65%" stopColor="#991B1B" />
       <stop offset="100%" stopColor="#450A0A" />
     </linearGradient>
 
-    <!-- Shadow Filter -->
-    <filter id="shadowSolid" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="6" stdDeviation="5" floodColor="#000000" floodOpacity="0.85" />
+    <!-- Center Light Glow Gradient -->
+    <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stopColor="#FDE68A" stopOpacity="0.8" />
+      <stop offset="40%" stopColor="#F59E0B" stopOpacity="0.4" />
+      <stop offset="100%" stopColor="#B45309" stopOpacity="0" />
+    </radialGradient>
+
+    <!-- Soft Drop Shadow Filter -->
+    <filter id="heavyShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" floodColor="#000000" floodOpacity="0.9" />
+    </filter>
+    <filter id="textShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" floodColor="#000000" floodOpacity="0.95" />
+    </filter>
+    <filter id="glowGleam" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
     </filter>
   </defs>
 
-  <!-- 1. SOLID BASE APP ICON (Square Squircle with Gold Border) -->
-  <rect width="512" height="512" fill="#000000" />
+  <!-- 1. BASE BACKGROUND & OUTER GOLD SQUIRCLE FRAME -->
+  <rect width="1024" height="1024" fill="#000000" />
   
-  <!-- Outer Gold Bezel -->
-  <rect x="12" y="12" width="488" height="488" rx="105" fill="url(#goldBezel3D)" stroke="#270F02" stroke-width="4" />
-  <!-- Inner Dark Bevel -->
-  <rect x="22" y="22" width="468" height="468" rx="95" fill="#140A01" />
-  <!-- Main Deep Emerald Card Face -->
-  <rect x="26" y="26" width="460" height="460" rx="91" fill="url(#bgRichEmerald)" stroke="url(#goldBezel3D)" stroke-width="2" />
+  <!-- Outer Gold Rim -->
+  <rect x="24" y="24" width="976" height="976" rx="210" fill="url(#goldFrameGrad)" stroke="#1F0D03" stroke-width="6" />
+  
+  <!-- Middle Dark Inset Rim -->
+  <rect x="44" y="44" width="936" height="936" rx="190" fill="#0C0501" stroke="#3A1700" stroke-width="2" />
+  
+  <!-- Inner Gold Lip -->
+  <rect x="52" y="52" width="920" height="920" rx="182" fill="none" stroke="url(#goldInnerLip)" stroke-width="5" />
 
-  <!-- 2. SYRIAN FLAG EMBLEMATIC HORIZONTAL BANDS -->
-  <g filter="url(#shadowSolid)">
-    <!-- Top Green Stripe -->
-    <path d="M 28 108 Q 256 128 484 108 L 484 148 Q 256 168 28 148 Z" fill="#007A3D" opacity="0.95" />
-    <!-- Center Pure White Stripe -->
-    <path d="M 28 148 Q 256 168 484 148 L 484 212 Q 256 232 28 212 Z" fill="#F8FAFC" />
-    <!-- Bottom Black Stripe -->
-    <path d="M 28 212 Q 256 232 484 212 L 484 250 Q 256 270 28 250 Z" fill="#090E17" />
+  <!-- Main Emerald Green Canvas -->
+  <rect x="58" y="58" width="908" height="908" rx="176" fill="url(#emeraldBg)" />
+
+  <!-- Subtle Top & Bottom Lighting Sheen -->
+  <ellipse cx="512" cy="70" rx="350" ry="60" fill="#22c55e" opacity="0.15" filter="url(#glowGleam)" />
+  <ellipse cx="512" cy="950" rx="280" ry="40" fill="#eab308" opacity="0.12" filter="url(#glowGleam)" />
+
+  <!-- 2. SYRIAN FLAG BANNER (3D Curved Ribbon) -->
+  <g filter="url(#heavyShadow)">
+    <!-- Flag Top Green Stripe -->
+    <path d="M 64 250 Q 512 285 960 250 L 960 325 Q 512 360 64 325 Z" fill="#007A3D" />
+    <path d="M 64 250 Q 512 285 960 250 L 960 256 Q 512 291 64 256 Z" fill="#4ade80" opacity="0.3" />
+
+    <!-- Flag Middle White Stripe -->
+    <path d="M 64 325 Q 512 360 960 325 L 960 435 Q 512 470 64 435 Z" fill="#F8FAFC" />
+    <path d="M 64 325 Q 512 360 960 325 L 960 335 Q 512 370 64 335 Z" fill="#FFFFFF" opacity="0.6" />
+
+    <!-- Flag Bottom Black Stripe -->
+    <path d="M 64 435 Q 512 470 960 435 L 960 500 Q 512 535 64 500 Z" fill="#0F172A" />
+    
+    <!-- Flag Lower Gold Trim Line -->
+    <path d="M 64 500 Q 512 535 960 500" fill="none" stroke="url(#goldInnerLip)" stroke-width="4" opacity="0.75" />
   </g>
 
-  <!-- Two Syrian Flag Red Stars on White Band -->
-  <g filter="url(#shadowSolid)">
-    <!-- Left Star on Flag -->
-    <polygon points="106,160 110,172 123,172 112,180 116,193 106,185 96,193 100,180 89,172 102,172" fill="url(#rubyRed3D)" stroke="#580808" stroke-width="0.8" />
-    <!-- Right Star on Flag -->
-    <polygon points="406,160 410,172 423,172 412,180 416,193 406,185 396,193 400,180 389,172 402,172" fill="url(#rubyRed3D)" stroke="#580808" stroke-width="0.8" />
+  <!-- Two Syrian Flag Ruby Red Stars on the White Stripe -->
+  <!-- Left Star on Flag -->
+  <g transform="translate(230, 365)" filter="url(#heavyShadow)">
+    <polygon points="0,-42 12,-13 42,-13 18,7 26,38 0,20 -26,38 -18,7 -42,-13 -12,-13" fill="url(#rubyStar)" stroke="#450A0A" stroke-width="2" />
+    <!-- 3D Star Highlight -->
+    <polygon points="0,-42 0,20 18,7 42,-13 12,-13" fill="#F87171" opacity="0.4" />
   </g>
 
-  <!-- 3. TOP THREE 5-POINT GOLD STARS -->
-  <g fill="url(#goldEagleMetal)" filter="url(#shadowSolid)">
-    <!-- Center Gold Star -->
-    <polygon points="256,48 261,61 275,61 264,69.5 268,83 256,74.5 244,83 248,69.5 237,61 251,61" stroke="#582400" stroke-width="0.7" />
-    <!-- Left Gold Star -->
-    <polygon points="202,56 206.5,68 219.5,68 209,76 213,88.5 202,80.5 191,88.5 195,76 184.5,68 197.5,68" stroke="#582400" stroke-width="0.7" transform="rotate(-12 202 70)" />
-    <!-- Right Gold Star -->
-    <polygon points="310,56 314.5,68 327.5,68 317,76 321,88.5 310,80.5 299,88.5 303,76 292.5,68 305.5,68" stroke="#582400" stroke-width="0.7" transform="rotate(12 310 70)" />
+  <!-- Right Star on Flag -->
+  <g transform="translate(794, 365)" filter="url(#heavyShadow)">
+    <polygon points="0,-42 12,-13 42,-13 18,7 26,38 0,20 -26,38 -18,7 -42,-13 -12,-13" fill="url(#rubyStar)" stroke="#450A0A" stroke-width="2" />
+    <!-- 3D Star Highlight -->
+    <polygon points="0,-42 0,20 18,7 42,-13 12,-13" fill="#F87171" opacity="0.4" />
   </g>
 
-  <!-- 4. HIGH-PRECISION 3D GOLDEN SYRIAN EAGLE -->
-  <g filter="url(#shadowSolid)">
-    <!-- Main Wings Outer Contour -->
-    <path d="M 256 126 C 205 85 152 105 136 122 C 160 152 195 186 226 166 C 242 156 256 162 256 162 Z" fill="url(#goldWingHighlight)" stroke="#451A03" stroke-width="0.8" />
-    <path d="M 256 126 C 307 85 360 105 376 122 C 352 152 317 186 286 166 C 270 156 256 162 256 162 Z" fill="url(#goldWingHighlight)" stroke="#451A03" stroke-width="0.8" />
+  <!-- 3. TOP THREE 5-POINT GOLD STARS (Above Eagle) -->
+  <!-- Center Star (Largest) -->
+  <g transform="translate(512, 102)" filter="url(#heavyShadow)">
+    <polygon points="0,-34 10,-10 34,-10 14,5 21,30 0,16 -21,30 -14,5 -34,-10 -10,-10" fill="url(#goldSpecular)" stroke="#451A03" stroke-width="1.5" />
+    <polygon points="0,-34 0,16 14,5 34,-10 10,-10" fill="#FFFFFF" opacity="0.4" />
+  </g>
+  <!-- Left Star -->
+  <g transform="translate(432, 118) rotate(-12)" filter="url(#heavyShadow)">
+    <polygon points="0,-26 8,-8 26,-8 11,4 16,23 0,12 -16,23 -11,4 -26,-8 -8,-8" fill="url(#goldSpecular)" stroke="#451A03" stroke-width="1.5" />
+    <polygon points="0,-26 0,12 11,4 26,-8 8,-8" fill="#FFFFFF" opacity="0.4" />
+  </g>
+  <!-- Right Star -->
+  <g transform="translate(592, 118) rotate(12)" filter="url(#heavyShadow)">
+    <polygon points="0,-26 8,-8 26,-8 11,4 16,23 0,12 -16,23 -11,4 -26,-8 -8,-8" fill="url(#goldSpecular)" stroke="#451A03" stroke-width="1.5" />
+    <polygon points="0,-26 0,12 11,4 26,-8 8,-8" fill="#FFFFFF" opacity="0.4" />
+  </g>
 
-    <!-- Left Wing Feathers Detailed Hierarchy -->
-    <path d="M 138 124 Q 166 150 198 196 Q 174 176 152 150 Z" fill="url(#goldEagleMetal)" stroke="#3E1700" stroke-width="0.5" />
-    <path d="M 154 136 Q 180 160 208 206 Q 188 184 168 160 Z" fill="url(#goldWingHighlight)" />
-    <path d="M 172 148 Q 196 172 220 214 Q 202 192 186 170 Z" fill="url(#goldEagleMetal)" />
-    <path d="M 190 158 Q 212 182 232 220 Q 218 200 204 180 Z" fill="url(#goldWingHighlight)" />
+  <!-- 4. THE MAJESTIC GOLDEN EAGLE EMBLEM (Centerpiece) -->
+  <g id="GoldenEagle" filter="url(#heavyShadow)">
+    <!-- Outer Wing Wingspan Outline -->
+    <!-- Left Wing -->
+    <path d="M 512 245 C 440 180 340 190 285 220 C 310 260 350 310 420 340 C 460 300 495 290 512 285 Z" fill="url(#wingGrad)" stroke="#3B1700" stroke-width="2" />
+    <!-- Right Wing -->
+    <path d="M 512 245 C 584 180 684 190 739 220 C 714 260 674 310 604 340 C 564 300 529 290 512 285 Z" fill="url(#wingGrad)" stroke="#3B1700" stroke-width="2" />
 
-    <!-- Right Wing Feathers Detailed Hierarchy -->
-    <path d="M 374 124 Q 346 150 314 196 Q 338 176 360 150 Z" fill="url(#goldEagleMetal)" stroke="#3E1700" stroke-width="0.5" />
-    <path d="M 358 136 Q 332 160 304 206 Q 324 184 344 160 Z" fill="url(#goldWingHighlight)" />
-    <path d="M 340 148 Q 316 172 292 214 Q 310 192 326 170 Z" fill="url(#goldEagleMetal)" />
-    <path d="M 322 158 Q 300 182 280 220 Q 294 200 308 180 Z" fill="url(#goldWingHighlight)" />
+    <!-- Left Wing Feathers Layer 1 (Top Primary) -->
+    <path d="M 288 222 C 340 250 395 300 450 360 C 410 330 360 290 310 250 Z" fill="url(#goldSpecular)" stroke="#3B1700" stroke-width="1" />
+    <path d="M 315 235 C 360 265 410 315 465 375 C 430 345 385 305 340 265 Z" fill="url(#wingGrad)" stroke="#3B1700" stroke-width="1" />
+    <path d="M 345 250 C 385 280 430 330 480 390 C 450 360 410 320 370 280 Z" fill="url(#goldSpecular)" stroke="#3B1700" stroke-width="1" />
+    <path d="M 375 265 C 410 295 450 345 495 405 C 470 375 435 335 400 295 Z" fill="url(#wingGrad)" stroke="#3B1700" stroke-width="1" />
+    
+    <!-- Right Wing Feathers Layer 1 (Top Primary) -->
+    <path d="M 736 222 C 684 250 629 300 574 360 C 614 330 664 290 714 250 Z" fill="url(#goldSpecular)" stroke="#3B1700" stroke-width="1" />
+    <path d="M 709 235 C 664 265 614 315 559 375 C 594 345 639 305 684 265 Z" fill="url(#wingGrad)" stroke="#3B1700" stroke-width="1" />
+    <path d="M 679 250 C 639 280 594 330 544 390 C 574 360 614 320 654 280 Z" fill="url(#goldSpecular)" stroke="#3B1700" stroke-width="1" />
+    <path d="M 649 265 C 614 295 574 345 529 405 C 554 375 589 335 624 295 Z" fill="url(#wingGrad)" stroke="#3B1700" stroke-width="1" />
 
     <!-- Tail Feathers Fan -->
-    <path d="M 230 208 L 256 248 L 282 208 L 270 192 L 242 192 Z" fill="url(#goldEagleMetal)" stroke="#451A03" stroke-width="0.8" />
-    <path d="M 244 210 L 256 254 L 268 210 Z" fill="url(#goldWingHighlight)" />
+    <path d="M 465 375 L 512 455 L 559 375 L 540 345 L 484 345 Z" fill="url(#goldSpecular)" stroke="#3B1700" stroke-width="2" />
+    <path d="M 485 375 L 512 465 L 539 375 Z" fill="url(#wingGrad)" />
+    <line x1="512" y1="360" x2="512" y2="460" stroke="#FFF7C2" stroke-width="2" />
 
-    <!-- Talons / Claws -->
-    <path d="M 208 202 L 198 220 M 213 205 L 213 223 M 219 202 L 225 220" stroke="#FFF7C2" stroke-width="3.5" stroke-linecap="round" />
-    <path d="M 304 202 L 314 220 M 299 205 L 299 223 M 293 202 L 287 220" stroke="#FFF7C2" stroke-width="3.5" stroke-linecap="round" />
+    <!-- Talons / Claws Gripping -->
+    <!-- Left Claw -->
+    <g fill="#FEF08A" stroke="#5B2404" stroke-width="2">
+      <path d="M 425 350 Q 405 385 410 405 Q 418 410 425 395 Q 435 375 440 355 Z" />
+      <path d="M 440 355 Q 435 390 442 410 Q 450 412 455 395 Q 458 375 455 355 Z" />
+      <path d="M 455 355 Q 460 385 470 402 Q 478 402 478 385 Q 472 368 468 350 Z" />
+    </g>
+    <!-- Right Claw -->
+    <g fill="#FEF08A" stroke="#5B2404" stroke-width="2">
+      <path d="M 599 350 Q 619 385 614 405 Q 606 410 599 395 Q 589 375 584 355 Z" />
+      <path d="M 584 355 Q 589 390 582 410 Q 574 412 569 395 Q 566 375 569 355 Z" />
+      <path d="M 569 355 Q 564 385 554 402 Q 546 402 546 385 Q 552 368 556 350 Z" />
+    </g>
 
-    <!-- Eagle Chest Shield -->
-    <path d="M 228 152 Q 256 142 284 152 Q 276 200 256 210 Q 236 200 228 152 Z" fill="url(#goldWingHighlight)" stroke="#451A03" stroke-width="1.2" />
-    <path d="M 238 160 Q 256 152 274 160 Q 268 190 256 198 Q 244 190 238 160 Z" fill="url(#goldEagleMetal)" />
+    <!-- Eagle Torso & Scaled Breast Shield -->
+    <path d="M 460 250 Q 512 230 564 250 Q 550 340 512 365 Q 474 340 460 250 Z" fill="url(#goldSpecular)" stroke="#3B1700" stroke-width="2" />
+    
+    <!-- Torso Feather Texture Details -->
+    <path d="M 475 265 Q 512 250 549 265 Q 540 325 512 345 Q 484 325 475 265 Z" fill="url(#wingGrad)" />
+    <!-- Chest Scales -->
+    <circle cx="512" cy="275" r="8" fill="#FFFBEB" opacity="0.7" />
+    <circle cx="496" cy="290" r="7" fill="#FFFBEB" opacity="0.6" />
+    <circle cx="528" cy="290" r="7" fill="#FFFBEB" opacity="0.6" />
+    <circle cx="512" cy="305" r="7" fill="#FFFBEB" opacity="0.7" />
+    <circle cx="500" cy="320" r="6" fill="#FFFBEB" opacity="0.6" />
+    <circle cx="524" cy="320" r="6" fill="#FFFBEB" opacity="0.6" />
+    <circle cx="512" cy="335" r="5" fill="#FFFBEB" opacity="0.7" />
 
-    <!-- Eagle Center Red Star under Chest -->
-    <polygon points="256,244 260,256 272,256 262.5,263 266,275 256,268 246,275 249.5,263 240,256 252,256" fill="url(#rubyRed3D)" stroke="#580808" stroke-width="0.7" />
+    <!-- Center 5-pointed Red Star directly under Eagle Body -->
+    <g transform="translate(512, 442)" filter="url(#heavyShadow)">
+      <polygon points="0,-48 14,-15 48,-15 20,8 30,44 0,23 -30,44 -20,8 -48,-15 -14,-15" fill="url(#rubyStar)" stroke="#3B0505" stroke-width="2" />
+      <polygon points="0,-48 0,23 20,8 48,-15 14,-15" fill="#F87171" opacity="0.5" />
+    </g>
 
-    <!-- Eagle Head & Beak Profile -->
-    <path d="M 240 114 Q 256 98 270 110 Q 282 118 268 130 Q 254 136 240 114 Z" fill="url(#goldWingHighlight)" stroke="#451A03" stroke-width="1" />
-    <!-- Beak Hook -->
-    <path d="M 270 110 Q 284 114 272 123 Z" fill="#92400E" stroke="#FEF08A" stroke-width="0.8" />
-    <!-- Eagle Eye -->
-    <circle cx="257" cy="112" r="2.8" fill="#000000" />
-    <circle cx="257.8" cy="111.2" r="0.9" fill="#FFFFFF" />
+    <!-- Eagle Head & Crown (Looking Right) -->
+    <path d="M 480 185 Q 512 155 540 178 Q 556 192 538 212 Q 512 225 480 185 Z" fill="url(#goldSpecular)" stroke="#3B1700" stroke-width="2" />
+    <!-- Head Feathers Ruffle -->
+    <path d="M 480 185 Q 470 175 488 172 Q 478 162 498 165 Q 512 155 530 168 Z" fill="url(#wingGrad)" />
+    <!-- Beak -->
+    <path d="M 536 178 Q 562 186 545 202 Q 532 195 536 178 Z" fill="#92400E" stroke="#FEF08A" stroke-width="1.5" />
+    <path d="M 545 186 L 536 190" stroke="#451A03" stroke-width="1" />
+    <!-- Eye -->
+    <circle cx="518" cy="180" r="4.5" fill="#180A02" />
+    <circle cx="519.5" cy="178.5" r="1.5" fill="#FFFFFF" />
   </g>
 
-  <!-- 5. 3D GOLDEN TYPOGRAPHY "الأسواق السورية" (Super Crisp Contrast) -->
-  <g filter="url(#shadowSolid)">
-    <!-- Word 1: الأسواق -->
+  <!-- 5. GOLDEN HORIZONTAL FLARE & LIGHT SEPARATOR -->
+  <g>
+    <!-- Center Beam -->
+    <rect x="180" y="546" width="664" height="3" fill="url(#goldInnerLip)" opacity="0.8" />
+    <!-- Center Glow Lens -->
+    <ellipse cx="512" cy="547" rx="140" ry="12" fill="url(#centerGlow)" filter="url(#glowGleam)" />
+    <circle cx="512" cy="547" r="4" fill="#FFFFFF" />
+  </g>
+
+  <!-- 6. 3D EMBOSSED GOLD ARABIC TYPOGRAPHY "الأسواق السورية" -->
+  <!-- Top Word: الأسواق -->
+  <g filter="url(#textShadow)">
+    <!-- Dark Extrusion Depth Behind -->
     <text
-      x="256"
-      y="350"
+      x="512"
+      y="712"
       text-anchor="middle"
-      fill="url(#textGold3D)"
-      stroke="#270F02"
-      stroke-width="5"
-      paint-order="stroke fill"
-      font-size="74"
+      fill="#1A0A01"
+      stroke="#140600"
+      stroke-width="18"
+      stroke-linejoin="round"
+      font-size="160"
       font-weight="900"
-      font-family="'Cairo', 'Arial Black', Tahoma, sans-serif"
+      font-family="'Cairo', 'Amiri', 'Traditional Arabic', Arial, sans-serif"
     >
       الأسواق
     </text>
-
-    <!-- Word 2: السورية -->
     <text
-      x="256"
-      y="430"
+      x="512"
+      y="708"
       text-anchor="middle"
-      fill="url(#textGold3D)"
-      stroke="#270F02"
-      stroke-width="5"
-      paint-order="stroke fill"
-      font-size="70"
+      fill="#5B2404"
+      stroke="#5B2404"
+      stroke-width="12"
+      stroke-linejoin="round"
+      font-size="160"
       font-weight="900"
-      font-family="'Cairo', 'Arial Black', Tahoma, sans-serif"
+      font-family="'Cairo', 'Amiri', 'Traditional Arabic', Arial, sans-serif"
+    >
+      الأسواق
+    </text>
+    <!-- Main Gold Face with Stroke Bevel -->
+    <text
+      x="512"
+      y="702"
+      text-anchor="middle"
+      fill="url(#goldTextGrad)"
+      stroke="#FDE68A"
+      stroke-width="3"
+      paint-order="stroke fill"
+      font-size="160"
+      font-weight="900"
+      font-family="'Cairo', 'Amiri', 'Traditional Arabic', Arial, sans-serif"
+    >
+      الأسواق
+    </text>
+  </g>
+
+  <!-- Bottom Word: السورية -->
+  <g filter="url(#textShadow)">
+    <!-- Dark Extrusion Depth Behind -->
+    <text
+      x="512"
+      y="868"
+      text-anchor="middle"
+      fill="#1A0A01"
+      stroke="#140600"
+      stroke-width="18"
+      stroke-linejoin="round"
+      font-size="152"
+      font-weight="900"
+      font-family="'Cairo', 'Amiri', 'Traditional Arabic', Arial, sans-serif"
+    >
+      السورية
+    </text>
+    <text
+      x="512"
+      y="864"
+      text-anchor="middle"
+      fill="#5B2404"
+      stroke="#5B2404"
+      stroke-width="12"
+      stroke-linejoin="round"
+      font-size="152"
+      font-weight="900"
+      font-family="'Cairo', 'Amiri', 'Traditional Arabic', Arial, sans-serif"
+    >
+      السورية
+    </text>
+    <!-- Main Gold Face with Stroke Bevel -->
+    <text
+      x="512"
+      y="858"
+      text-anchor="middle"
+      fill="url(#goldTextGrad)"
+      stroke="#FDE68A"
+      stroke-width="3"
+      paint-order="stroke fill"
+      font-size="152"
+      font-weight="900"
+      font-family="'Cairo', 'Amiri', 'Traditional Arabic', Arial, sans-serif"
     >
       السورية
     </text>
   </g>
 
-  <!-- 6. THREE RUBY RED STARS AT THE BOTTOM -->
-  <g fill="url(#rubyRed3D)" filter="url(#shadowSolid)">
-    <!-- Center Star -->
-    <polygon points="256,446 261,460 276,460 264,469 268.5,483 256,474.5 243.5,483 248,469 236,460 251,460" stroke="#450A0A" stroke-width="0.9" />
-    <!-- Left Star -->
-    <polygon points="194,450 198.5,463 213,463 201.5,471 205.5,484 194,476 182.5,484 186.5,471 175,463 189.5,463" stroke="#450A0A" stroke-width="0.9" />
-    <!-- Right Star -->
-    <polygon points="318,450 322.5,463 337,463 325.5,471 329.5,484 318,476 306.5,484 310.5,471 299,463 313.5,463" stroke="#450A0A" stroke-width="0.9" />
+  <!-- 7. BOTTOM GOLD DECORATIVE ORNAMENT (-•- ❖ -•-) -->
+  <g transform="translate(512, 936)" filter="url(#heavyShadow)">
+    <!-- Center Diamond Rhombus -->
+    <polygon points="0,-16 16,0 0,16 -16,0" fill="url(#goldSpecular)" stroke="#451A03" stroke-width="1.5" />
+    <polygon points="0,-10 10,0 0,10 -10,0" fill="#FFFFFF" opacity="0.6" />
+    
+    <!-- Left & Right Diamond Accents -->
+    <polygon points="-32,-8 -24,0 -32,8 -40,0" fill="url(#goldSpecular)" stroke="#451A03" stroke-width="1" />
+    <polygon points="32,-8 40,0 32,8 24,0" fill="url(#goldSpecular)" stroke="#451A03" stroke-width="1" />
+
+    <!-- Left & Right Dots -->
+    <circle cx="-56" cy="0" r="4.5" fill="url(#goldSpecular)" stroke="#451A03" stroke-width="1" />
+    <circle cx="56" cy="0" r="4.5" fill="url(#goldSpecular)" stroke="#451A03" stroke-width="1" />
+
+    <!-- Flanking Gold Lines with Taper -->
+    <path d="M -75 0 L -210 0" stroke="url(#goldInnerLip)" stroke-width="3" stroke-linecap="round" />
+    <path d="M 75 0 L 210 0" stroke="url(#goldInnerLip)" stroke-width="3" stroke-linecap="round" />
   </g>
+
+  <!-- 8. BOTTOM GOLD RIM HIGHLIGHT FLARE -->
+  <ellipse cx="512" cy="970" rx="90" ry="10" fill="url(#centerGlow)" filter="url(#glowGleam)" />
+  <circle cx="512" cy="970" r="3" fill="#FFFFFF" />
 </svg>

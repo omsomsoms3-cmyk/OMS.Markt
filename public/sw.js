@@ -1,12 +1,14 @@
-const CACHE_NAME = 'oms-market-v1-static';
-const DATA_CACHE = 'oms-market-v1-data';
+const CACHE_NAME = 'oms-market-v2-static';
+const DATA_CACHE = 'oms-market-v2-data';
 
 // Assets to precache
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/favicon.ico'
+  '/icon-192.png',
+  '/icon-512.png',
+  '/icon-maskable-512.png'
 ];
 
 // Install Event
@@ -55,23 +57,22 @@ self.addEventListener('fetch', (event) => {
         if (cachedResponse) {
           // Fetch fresh image in background
           fetch(request).then((networkResponse) => {
-            if (networkResponse.status === 200) {
+            if (networkResponse && networkResponse.status === 200) {
               cache.put(request, networkResponse.clone());
             }
-          }).catch(() => {/* Ignore offline background fetch failure */});
+          }).catch(() => {});
           return cachedResponse;
         }
 
         try {
           const networkResponse = await fetch(request);
-          if (networkResponse.status === 200) {
+          if (networkResponse && networkResponse.status === 200) {
             cache.put(request, networkResponse.clone());
           }
           return networkResponse;
         } catch (error) {
-          // Fallback image if totally offline
           return new Response(
-            `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"><rect width="200" height="150" fill="#1e293b"/><text x="50%" y="50%" fill="#94a3b8" dominant-baseline="middle" text-anchor="middle" font-size="12">OMS Offline Image</text></svg>`,
+            `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"><rect width="200" height="150" fill="#090d16"/><text x="50%" y="50%" fill="#e2e8f0" dominant-baseline="middle" text-anchor="middle" font-size="12">OMS Offline</text></svg>`,
             { headers: { 'Content-Type': 'image/svg+xml' } }
           );
         }
@@ -80,7 +81,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network First with Cache Fallback for HTML, API, and app scripts
+  // Network First with Cache Fallback for HTML and app scripts
   event.respondWith(
     fetch(request)
       .then((networkResponse) => {
@@ -93,22 +94,70 @@ self.addEventListener('fetch', (event) => {
         return networkResponse;
       })
       .catch(async () => {
-        console.log('[Service Worker] Offline fetch fallback for:', request.url);
         const cachedResponse = await caches.match(request);
         if (cachedResponse) {
           return cachedResponse;
         }
         
-        // Return app shell if navigating
         if (request.mode === 'navigate') {
           const appShell = await caches.match('/index.html');
           if (appShell) return appShell;
         }
 
-        return new Response('Offline - No Cached Version Available', {
+        return new Response('OMS Offline - التطبيق يعمل بوضع عدم الاتصال', {
           status: 533,
           headers: { 'Content-Type': 'text/plain; charset=utf-8' },
         });
       })
+  );
+});
+
+// Background Sync capability
+self.addEventListener('sync', (event) => {
+  console.log('[Service Worker] Background sync triggered:', event.tag);
+  if (event.tag === 'sync-oms-data') {
+    event.waitUntil(Promise.resolve());
+  }
+});
+
+// Periodic Background Sync capability
+self.addEventListener('periodicsync', (event) => {
+  console.log('[Service Worker] Periodic background sync triggered:', event.tag);
+  if (event.tag === 'get-latest-rates') {
+    event.waitUntil(Promise.resolve());
+  }
+});
+
+// Push Notifications capability
+self.addEventListener('push', (event) => {
+  console.log('[Service Worker] Push received');
+  const data = event.data ? event.data.json() : { title: 'OMS الأسواق السورية', body: 'تحديث جديد في أسعار الصرف والأسواق' };
+  const options = {
+    body: data.body || 'تحديث فوري لأسعار الصرف والذهب',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    vibrate: [100, 50, 100],
+    data: {
+      dateOfArrival: Date.now(),
+      primaryKey: '1'
+    }
+  };
+  event.waitUntil(self.registration.showNotification(data.title || 'OMS الأسواق السورية', options));
+});
+
+// Notification Click handler
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window' }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url === '/' && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow('/');
+      }
+    })
   );
 });

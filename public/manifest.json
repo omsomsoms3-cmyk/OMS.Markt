@@ -1,18 +1,30 @@
 {
-  "id": "/",
+  "id": "https://oms-markt.ai.studio/",
   "name": "OMS الأسواق السورية - منصة الصرف والعقارات والسيارات",
   "short_name": "OMS Market",
   "description": "المنصة السورية الشاملة لأسعار الصرف والذهب، العقارات، السيارات، الوظائف، الهواتف الذكية، وخدمات التكسي والشحن",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui", "window-controls-overlay"],
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui",
+    "browser"
+  ],
   "orientation": "portrait-primary",
   "background_color": "#090d16",
   "theme_color": "#090d16",
   "lang": "ar",
   "dir": "rtl",
-  "categories": ["shopping", "finance", "business", "utilities", "productivity"],
+  "categories": [
+    "shopping",
+    "finance",
+    "business",
+    "utilities",
+    "productivity",
+    "news"
+  ],
   "icons": [
     {
       "src": "/icon-192.png",
@@ -45,52 +57,133 @@
       "purpose": "any maskable"
     }
   ],
-  "shortcuts": [
-    {
-      "name": "أسعار الصرف والذهب",
-      "short_name": "الصرف",
-      "description": "أسعار الليرة السورية والدولار والذهب لحظة بلحظة",
-      "url": "/?tab=currency",
-      "icons": [{ "src": "/icon-192.svg", "sizes": "192x192" }]
-    },
-    {
-      "name": "سوق العقارات",
-      "short_name": "عقارات",
-      "description": "عقارات وشقق للبيع والإيجار في كافة المحافظات",
-      "url": "/?tab=realestate",
-      "icons": [{ "src": "/icon-192.svg", "sizes": "192x192" }]
-    },
-    {
-      "name": "سوق السيارات",
-      "short_name": "سيارات",
-      "description": "سيارات للبيع مع حاسبة الجمركة والأسعار",
-      "url": "/?tab=cars",
-      "icons": [{ "src": "/icon-192.svg", "sizes": "192x192" }]
-    },
-    {
-      "name": "المستجدات والأخبار الرسمية",
-      "short_name": "الأخبار",
-      "description": "أخبار سانا والقرارات الرسمية والاقتصادية",
-      "url": "/?tab=news",
-      "icons": [{ "src": "/icon-192.svg", "sizes": "192x192" }]
-    }
-  ],
-  "prefer_related_applications": false,
-  "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
   "screenshots": [
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "OMS الأسواق السورية - الواجهة الرئيسية"
+      "label": "OMS الأسواق السورية - الواجهة الرئيسية لشاشات الهواتف"
     },
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "OMS الأسواق السورية - لوحة الخدمات والأسعار"
+      "label": "OMS الأسواق السورية - لوحة الخدمات والأسعار للحواسيب والشاشات الكبيرة"
     }
-  ]
+  ],
+  "shortcuts": [
+    {
+      "name": "أسعار الصرف والذهب",
+      "short_name": "الصرف",
+      "description": "أسعار الليرة السورية والدولار والذهب لحظة بلحظة",
+      "url": "/?tab=currency",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "سوق العقارات",
+      "short_name": "عقارات",
+      "description": "عقارات وشقق للبيع والإيجار في كافة المحافظات",
+      "url": "/?tab=realestate",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "سوق السيارات",
+      "short_name": "سيارات",
+      "description": "سيارات للبيع مع حاسبة الجمركة والأسعار",
+      "url": "/?tab=cars",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "المستجدات والأخبار الرسمية",
+      "short_name": "الأخبار",
+      "description": "أخبار سانا والقرارات الرسمية والاقتصادية",
+      "url": "/?tab=news",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ],
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
+  "handle_links": "preferred",
+  "edge_side_panel": {
+    "preferred_width": 420
+  },
+  "related_applications": [
+    {
+      "platform": "play",
+      "url": "https://play.google.com/store/apps/details?id=com.oms.syrianmarkets",
+      "id": "com.oms.syrianmarkets"
+    }
+  ],
+  "prefer_related_applications": false,
+  "scope_extensions": [
+    {
+      "origin": "https://oms-markt.ai.studio"
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/?action=import",
+      "name": "OMS Market Files",
+      "accept": {
+        "application/json": [".json"],
+        "text/plain": [".txt"]
+      },
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "share_target": {
+    "action": "/?shared=true",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "protocol_handlers": [
+    {
+      "protocol": "web+oms",
+      "url": "/?action=%s"
+    }
+  ],
+  "note_taking": {
+    "new_note_url": "/?tab=notes"
+  },
+  "widgets": [
+    {
+      "name": "أسعار الصرف اليوم",
+      "short_name": "الصرف",
+      "description": "أسعار الصرف والذهب اللحظية في سوريا",
+      "tag": "currency-widget",
+      "template": "currency-template",
+      "ms_ac_template": "/widget.json",
+      "data": "/widget-data.json",
+      "type": "application/json",
+      "screenshots": [
+        {
+          "src": "/icon-512.png",
+          "sizes": "512x512",
+          "label": "ودجت أسعار الصرف"
+        }
+      ],
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ],
+      "auth": false,
+      "update": 3600
+    }
+  ],
+  "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7"
 }
